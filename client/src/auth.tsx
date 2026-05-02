@@ -13,6 +13,9 @@ type AuthCtx = {
     password: string;
     display_name: string;
     school?: string;
+    gender?: "m" | "f" | "x";
+    level?: "hs" | "college" | "open" | "masters";
+    bio?: string;
   }) => Promise<void>;
   logout: () => void;
   refresh: () => Promise<void>;

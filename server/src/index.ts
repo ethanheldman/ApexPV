@@ -49,6 +49,18 @@ if (existsSync(oldDbCheck)) {
 
 initSchema();
 
+// Auto-seed when the users table is empty so a fresh deploy has demo data.
+{
+  const Database = (await import("better-sqlite3")).default;
+  const probe = Database(oldDbCheck);
+  const row = probe.prepare("SELECT COUNT(*) AS c FROM users").get() as { c: number };
+  probe.close();
+  if (row.c === 0) {
+    console.log("[apex] empty database — running seed...");
+    await import("./seed.js");
+  }
+}
+
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: true, credentials: true });
@@ -59,11 +71,24 @@ await app.register(multipart, {
     files: 1,
   },
 });
+
+// Serve uploaded videos at /uploads/*
 await app.register(staticPlugin, {
   root: UPLOAD_DIR,
   prefix: "/uploads/",
-  decorateReply: false,
+  decorateReply: true, // first plugin registers reply.sendFile
 });
+
+// Production: serve the built client (vite build output) at /
+const clientDist = path.resolve(__dirname, "../../client/dist");
+const serveClient = existsSync(path.join(clientDist, "index.html"));
+if (serveClient) {
+  await app.register(staticPlugin, {
+    root: clientDist,
+    prefix: "/",
+    decorateReply: false,
+  });
+}
 
 app.decorate("auth", async (req: any, reply: any) => {
   try {
@@ -88,6 +113,17 @@ await app.register(meetRoutes, { prefix: "/api/meets" });
 await app.register(funRoutes, { prefix: "/api/fun" });
 await app.register(calcRoutes, { prefix: "/api/calc" });
 await app.register(uploadRoutes, { prefix: "/api/uploads" });
+
+// SPA fallback: anything not matched by an API route or a static asset gets index.html
+if (serveClient) {
+  app.setNotFoundHandler((req: any, reply: any) => {
+    if (req.url.startsWith("/api/") || req.url.startsWith("/uploads/")) {
+      return reply.code(404).send({ error: "not found" });
+    }
+    return reply.sendFile("index.html", clientDist);
+  });
+  app.log.info(`serving client from ${clientDist}`);
+}
 
 try {
   // Bind 0.0.0.0 so the same-WiFi iPhone can reach the API directly if needed.

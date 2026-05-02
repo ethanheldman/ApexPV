@@ -3,12 +3,18 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently -n srv,web -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "seed": "cd server && npm run seed",
-    "install:all": "npm install && (cd server && npm install) && (cd client && npm install)"
+    "install:all": "npm install && (cd server && npm install) && (cd client && npm install)",
+    "build": "npm run install:all && (cd client && npm run build)",
+    "start": "cd server && npm run start",
+    "postinstall": "test -d server/node_modules && (cd server && npm rebuild better-sqlite3) || true"
   },
   "devDependencies": {
     "concurrently": "^9.0.1"
