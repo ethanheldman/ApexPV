@@ -1,0 +1,32 @@
+## node
+node_modules/
+npm-debug.log*
+
+## build output
+dist/
+build/
+*.tsbuildinfo
+
+## local SQLite databases
+server/apex.db
+server/apex.db-wal
+server/apex.db-shm
+
+## user-uploaded videos (local dev only)
+server/uploads/*
+!server/uploads/.gitkeep
+
+## env / secrets
+.env
+.env.*
+!.env.example
+
+## editor / OS junk
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+## misc
+.cache/

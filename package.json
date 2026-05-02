@@ -1,0 +1,16 @@
+{
+  "name": "apex",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n srv,web -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "seed": "cd server && npm run seed",
+    "install:all": "npm install && (cd server && npm install) && (cd client && npm install)"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}
