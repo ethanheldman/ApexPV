@@ -3,7 +3,7 @@ import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import multipart from "@fastify/multipart";
 import staticPlugin from "@fastify/static";
-import { unlinkSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { initSchema } from "./db.js";
@@ -24,35 +24,18 @@ import { calcRoutes } from "./routes/calc.js";
 const PORT = Number(process.env.PORT ?? 4011);
 const JWT_SECRET = process.env.JWT_SECRET ?? "apex-dev-secret-do-not-use-in-prod";
 
-// Schema migration: if an old DB exists with `bar_height_cm` columns,
-// blow it away so the dev experience is clean. We re-seed afterwards.
+// Path to the on-disk SQLite database file.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const oldDbCheck = path.resolve(__dirname, "../apex.db");
-if (existsSync(oldDbCheck)) {
-  try {
-    const probe = (await import("better-sqlite3")).default(oldDbCheck);
-    const cols = probe.prepare("PRAGMA table_info(attempts)").all() as { name: string }[];
-    const userCols = probe.prepare("PRAGMA table_info(users)").all() as { name: string }[];
-    const hasOldHeight = cols.some((c) => c.name === "bar_height_cm");
-    const hasNewUserFields = userCols.some((c) => c.name === "unit_pref");
-    probe.close();
-    if (hasOldHeight || !hasNewUserFields) {
-      console.log("[apex] detected legacy schema — wiping db for migration");
-      unlinkSync(oldDbCheck);
-      const wal = oldDbCheck + "-wal";
-      const shm = oldDbCheck + "-shm";
-      if (existsSync(wal)) unlinkSync(wal);
-      if (existsSync(shm)) unlinkSync(shm);
-    }
-  } catch {}
-}
+const dbFile = path.resolve(__dirname, "../apex.db");
 
 initSchema();
 
 // Auto-seed when the users table is empty so a fresh deploy has demo data.
+// Uses a fresh connection (separate from the db.ts singleton) just to count;
+// the actual seed module imports the singleton itself.
 {
   const Database = (await import("better-sqlite3")).default;
-  const probe = Database(oldDbCheck);
+  const probe = Database(dbFile, { readonly: true });
   const row = probe.prepare("SELECT COUNT(*) AS c FROM users").get() as { c: number };
   probe.close();
   if (row.c === 0) {
