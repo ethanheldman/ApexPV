@@ -90,7 +90,61 @@ app.decorate("auth", async (req: any, reply: any) => {
   }
 });
 
+// Global error handler — log the full error (so we can see it in Render logs)
+// and return a meaningful message instead of a generic 500.
+app.setErrorHandler((err, req, reply) => {
+  const status = (err as any).statusCode ?? 500;
+  req.log.error(
+    { err, url: req.url, method: req.method, body: req.body, code: (err as any).code },
+    "[apex] request failed",
+  );
+  // Surface the underlying Postgres / app message so we can diagnose without
+  // shell access. Will tighten before any sensitive-data prod release.
+  reply.code(status).send({
+    error: err.message ?? "internal error",
+    code: (err as any).code ?? undefined,
+    detail: (err as any).detail ?? undefined,
+  });
+});
+
 app.get("/api/health", async () => ({ ok: true, name: "apex" }));
+
+// Diagnostic endpoint — confirms each expected table is reachable. Helpful when
+// debugging deploy issues; safe because it leaks only schema names, not data.
+app.get("/api/_diag", async () => {
+  const out: Record<string, any> = {
+    db_host: (() => {
+      try {
+        return new URL(process.env.DATABASE_URL ?? "").host;
+      } catch {
+        return null;
+      }
+    })(),
+    has_supabase_url: !!process.env.SUPABASE_URL,
+    has_supabase_key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
+  const tables = [
+    "users",
+    "follows",
+    "poles",
+    "meets",
+    "sessions",
+    "attempts",
+    "posts",
+    "comments",
+    "kudos",
+    "notifications",
+  ];
+  for (const t of tables) {
+    try {
+      const r = await pool.query(`SELECT COUNT(*)::int AS c FROM ${t}`);
+      out[t] = { count: r.rows[0]?.c };
+    } catch (e: any) {
+      out[t] = { error: e.message ?? String(e), code: e.code };
+    }
+  }
+  return out;
+});
 
 await app.register(authRoutes, { prefix: "/api/auth" });
 await app.register(userRoutes, { prefix: "/api/users" });
