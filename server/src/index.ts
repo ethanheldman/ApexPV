@@ -25,20 +25,39 @@ import { calcRoutes } from "./routes/calc.js";
 const PORT = Number(process.env.PORT ?? 4011);
 const JWT_SECRET = process.env.JWT_SECRET ?? "apex-dev-secret-do-not-use-in-prod";
 
-// Warm up the Postgres pool with a single ping so a bad DATABASE_URL fails fast
-// instead of breaking on first request.
-try {
-  await pool.query("SELECT 1");
-  console.log("[apex] Postgres connection OK");
-} catch (e: any) {
-  console.error(
-    "[apex] Postgres connection failed. Check DATABASE_URL.\n",
-    e.message ?? e,
-  );
-  process.exit(1);
-}
+// Loud startup banner — log to stdout immediately so we can see anything in
+// Render's log even if a later step hangs.
+console.log("[apex] starting", {
+  node: process.version,
+  port: PORT,
+  hasDatabaseUrl: !!process.env.DATABASE_URL,
+  hasSupabaseUrl: !!process.env.SUPABASE_URL,
+  hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  databaseHost: (() => {
+    try {
+      return new URL(process.env.DATABASE_URL ?? "").host;
+    } catch {
+      return "(invalid DATABASE_URL)";
+    }
+  })(),
+});
 
-await seedIfEmpty();
+// Warm up Postgres in the background so we can still bind a port even if
+// connection is slow/dead — Render kills us if no port opens within ~60s.
+pool
+  .query("SELECT 1")
+  .then(async () => {
+    console.log("[apex] Postgres connection OK");
+    try {
+      await seedIfEmpty();
+    } catch (e: any) {
+      console.error("[apex] seed failed:", e.message ?? e);
+    }
+  })
+  .catch((e: any) => {
+    console.error("[apex] Postgres connection FAILED:", e.message ?? e);
+    console.error("[apex] Server is up but DB calls will fail until DATABASE_URL is fixed.");
+  });
 
 const app = Fastify({ logger: true });
 

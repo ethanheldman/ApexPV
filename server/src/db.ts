@@ -28,6 +28,9 @@ export const pool = new Pool({
   // benefit from a huge pool.
   max: 5,
   idleTimeoutMillis: 30_000,
+  // Short connect timeout — fail fast on bad URL / paused project rather than
+  // hanging long enough to time out Render's port-binding window.
+  connectionTimeoutMillis: 8_000,
 });
 
 pool.on("error", (err) => {
