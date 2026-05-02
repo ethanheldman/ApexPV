@@ -7,12 +7,12 @@ dist/
 build/
 *.tsbuildinfo
 
-## local SQLite databases
-server/apex.db
-server/apex.db-wal
-server/apex.db-shm
+## local SQLite databases (legacy — pre-Supabase)
+server/*.db
+server/*.db-wal
+server/*.db-shm
 
-## user-uploaded videos (local dev only)
+## user-uploaded videos (legacy — pre-Supabase Storage)
 server/uploads/*
 !server/uploads/.gitkeep
 
