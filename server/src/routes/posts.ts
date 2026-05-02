@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { db } from "../db.js";
+import { q, qAll, qInsertId, qOne } from "../db.js";
 import type { Post, Attempt } from "../types.js";
 
 const PostBody = z.object({
@@ -12,49 +12,49 @@ const PostBody = z.object({
 
 const CommentBody = z.object({ body: z.string().min(1).max(500) });
 
-function canSee(viewerId: number | null, post: Post): boolean {
+async function canSee(viewerId: number | null, post: Post): Promise<boolean> {
   if (post.visibility === "public") return true;
   if (!viewerId) return false;
   if (post.user_id === viewerId) return true;
   if (post.visibility === "followers") {
-    const f = db
-      .prepare("SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?")
-      .get(viewerId, post.user_id);
+    const f = await qOne(
+      "SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?",
+      [viewerId, post.user_id],
+    );
     return !!f;
   }
   return false;
 }
 
-function hydratePost(post: Post, viewerId: number | null): any {
-  const author = db
-    .prepare(
-      "SELECT id, handle, display_name, school, avatar_seed, avatar_url, pr_height_mm FROM users WHERE id = ?",
-    )
-    .get(post.user_id);
+async function hydratePost(post: Post, viewerId: number | null): Promise<any> {
+  const author = await qOne(
+    "SELECT id, handle, display_name, school, avatar_seed, avatar_url, pr_height_mm FROM users WHERE id = ?",
+    [post.user_id],
+  );
   const pinned = post.pinned_attempt_ids ? (JSON.parse(post.pinned_attempt_ids) as number[]) : [];
   const attempts =
     pinned.length > 0
-      ? (db
-          .prepare(
-            `SELECT * FROM attempts WHERE id IN (${pinned.map(() => "?").join(",")})`,
-          )
-          .all(...pinned) as Attempt[])
+      ? await qAll<Attempt>(
+          `SELECT * FROM attempts WHERE id IN (${pinned.map(() => "?").join(",")})`,
+          pinned,
+        )
       : [];
-  const kudosCount = (db
-    .prepare("SELECT COUNT(*) as c FROM kudos WHERE post_id = ?")
-    .get(post.id) as any).c as number;
-  const commentsCount = (db
-    .prepare("SELECT COUNT(*) as c FROM comments WHERE post_id = ?")
-    .get(post.id) as any).c as number;
+  const kudosCount = (
+    await qOne<{ c: number }>("SELECT COUNT(*)::int as c FROM kudos WHERE post_id = ?", [post.id])
+  )!.c;
+  const commentsCount = (
+    await qOne<{ c: number }>("SELECT COUNT(*)::int as c FROM comments WHERE post_id = ?", [post.id])
+  )!.c;
   const myKudos = viewerId
-    ? !!db.prepare("SELECT 1 FROM kudos WHERE post_id = ? AND user_id = ?").get(post.id, viewerId)
+    ? !!(await qOne(
+        "SELECT 1 FROM kudos WHERE post_id = ? AND user_id = ?",
+        [post.id, viewerId],
+      ))
     : false;
   let original = null;
   if (post.repost_of_id) {
-    const orig = db.prepare("SELECT * FROM posts WHERE id = ?").get(post.repost_of_id) as
-      | Post
-      | undefined;
-    if (orig) original = hydratePost(orig, viewerId);
+    const orig = await qOne<Post>("SELECT * FROM posts WHERE id = ?", [post.repost_of_id]);
+    if (orig) original = await hydratePost(orig, viewerId);
   }
   return {
     ...post,
@@ -77,35 +77,34 @@ export async function postRoutes(app: FastifyInstance) {
     let isFirst = 0;
     if (p.pinned_attempt_ids && p.pinned_attempt_ids.length > 0) {
       const ids = p.pinned_attempt_ids;
-      const rows = db
-        .prepare(`SELECT * FROM attempts WHERE id IN (${ids.map(() => "?").join(",")})`)
-        .all(...ids) as Attempt[];
+      const rows = await qAll<Attempt>(
+        `SELECT * FROM attempts WHERE id IN (${ids.map(() => "?").join(",")})`,
+        ids,
+      );
       const clears = rows.filter((a) => a.result === "clear");
       if (clears.length) {
         const max = Math.max(...clears.map((a) => a.bar_height_mm));
-        const u = db
-          .prepare("SELECT pr_height_mm FROM users WHERE id = ?")
-          .get(req.user.id) as { pr_height_mm: number | null };
-        if (u.pr_height_mm && max >= u.pr_height_mm) isPr = 1;
+        const u = await qOne<{ pr_height_mm: number | null }>(
+          "SELECT pr_height_mm FROM users WHERE id = ?",
+          [req.user.id],
+        );
+        if (u?.pr_height_mm && max >= u.pr_height_mm) isPr = 1;
 
-        const prior = db
-          .prepare(
-            `SELECT COUNT(*) AS c FROM attempts a
-             JOIN sessions s ON s.id = a.session_id
-             WHERE a.user_id = ? AND a.bar_height_mm = ? AND a.result = 'clear'
-               AND a.id NOT IN (${ids.map(() => "?").join(",")})`,
-          )
-          .get(req.user.id, max, ...ids) as { c: number };
-        if (prior.c === 0) isFirst = 1;
+        const prior = await qOne<{ c: number }>(
+          `SELECT COUNT(*)::int AS c FROM attempts a
+           JOIN sessions s ON s.id = a.session_id
+           WHERE a.user_id = ? AND a.bar_height_mm = ? AND a.result = 'clear'
+             AND a.id NOT IN (${ids.map(() => "?").join(",")})`,
+          [req.user.id, max, ...ids],
+        );
+        if ((prior?.c ?? 0) === 0) isFirst = 1;
       }
     }
 
-    const r = db
-      .prepare(
-        `INSERT INTO posts (user_id, session_id, visibility, caption, pinned_attempt_ids, is_pr, is_first_clearance)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
+    const id = await qInsertId(
+      `INSERT INTO posts (user_id, session_id, visibility, caption, pinned_attempt_ids, is_pr, is_first_clearance)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      [
         req.user.id,
         p.session_id ?? null,
         p.visibility,
@@ -113,8 +112,9 @@ export async function postRoutes(app: FastifyInstance) {
         p.pinned_attempt_ids ? JSON.stringify(p.pinned_attempt_ids) : null,
         isPr,
         isFirst,
-      );
-    const post = db.prepare("SELECT * FROM posts WHERE id = ?").get(r.lastInsertRowid) as Post;
+      ],
+    );
+    const post = (await qOne<Post>("SELECT * FROM posts WHERE id = ?", [id]))!;
     return hydratePost(post, req.user.id);
   });
 
@@ -125,16 +125,16 @@ export async function postRoutes(app: FastifyInstance) {
       await req.jwtVerify();
       viewerId = req.user.id;
     } catch {}
-    const post = db.prepare("SELECT * FROM posts WHERE id = ?").get(id) as Post | undefined;
+    const post = await qOne<Post>("SELECT * FROM posts WHERE id = ?", [id]);
     if (!post) return reply.code(404).send({ error: "not found" });
-    if (!canSee(viewerId, post)) return reply.code(403).send({ error: "forbidden" });
+    if (!(await canSee(viewerId, post))) return reply.code(403).send({ error: "forbidden" });
     return hydratePost(post, viewerId);
   });
 
   app.get<{ Params: { handle: string } }>("/by/:handle", async (req: any, reply) => {
-    const u = db.prepare("SELECT id FROM users WHERE handle = ?").get(req.params.handle) as
-      | { id: number }
-      | undefined;
+    const u = await qOne<{ id: number }>("SELECT id FROM users WHERE handle = ?", [
+      req.params.handle,
+    ]);
     if (!u) return reply.code(404).send({ error: "not found" });
 
     let viewerId: number | null = null;
@@ -143,14 +143,19 @@ export async function postRoutes(app: FastifyInstance) {
       viewerId = req.user.id;
     } catch {}
 
-    const all = db
-      .prepare("SELECT * FROM posts WHERE user_id = ? ORDER BY id DESC")
-      .all(u.id) as Post[];
-    const visible = all.filter((p) => canSee(viewerId, p));
-    const total = all.length;
+    const all = await qAll<Post>(
+      "SELECT * FROM posts WHERE user_id = ? ORDER BY id DESC",
+      [u.id],
+    );
+    const visible: Post[] = [];
+    for (const p of all) {
+      if (await canSee(viewerId, p)) visible.push(p);
+    }
+    const hydrated = [];
+    for (const p of visible) hydrated.push(await hydratePost(p, viewerId));
     return {
-      posts: visible.map((p) => hydratePost(p, viewerId)),
-      hidden_count: total - visible.length,
+      posts: hydrated,
+      hidden_count: all.length - visible.length,
     };
   });
 
@@ -159,7 +164,7 @@ export async function postRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const post = db.prepare("SELECT * FROM posts WHERE id = ?").get(id) as Post | undefined;
+      const post = await qOne<Post>("SELECT * FROM posts WHERE id = ?", [id]);
       if (!post) return reply.code(404).send({ error: "not found" });
       if (post.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
       const Body = z.object({
@@ -168,13 +173,14 @@ export async function postRoutes(app: FastifyInstance) {
       });
       const parsed = Body.safeParse(req.body);
       if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
-      db.prepare(
+      await q(
         `UPDATE posts SET visibility = COALESCE(?, visibility),
                           caption = COALESCE(?, caption),
-                          updated_at = datetime('now')
+                          updated_at = now()
          WHERE id = ?`,
-      ).run(parsed.data.visibility ?? null, parsed.data.caption ?? null, id);
-      const updated = db.prepare("SELECT * FROM posts WHERE id = ?").get(id) as Post;
+        [parsed.data.visibility ?? null, parsed.data.caption ?? null, id],
+      );
+      const updated = (await qOne<Post>("SELECT * FROM posts WHERE id = ?", [id]))!;
       return hydratePost(updated, req.user.id);
     },
   );
@@ -184,12 +190,10 @@ export async function postRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const post = db.prepare("SELECT user_id FROM posts WHERE id = ?").get(id) as
-        | { user_id: number }
-        | undefined;
+      const post = await qOne<{ user_id: number }>("SELECT user_id FROM posts WHERE id = ?", [id]);
       if (!post) return reply.code(404).send({ error: "not found" });
       if (post.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
-      db.prepare("DELETE FROM posts WHERE id = ?").run(id);
+      await q("DELETE FROM posts WHERE id = ?", [id]);
       return { ok: true };
     },
   );
@@ -200,9 +204,9 @@ export async function postRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const original = db.prepare("SELECT * FROM posts WHERE id = ?").get(id) as Post | undefined;
+      const original = await qOne<Post>("SELECT * FROM posts WHERE id = ?", [id]);
       if (!original) return reply.code(404).send({ error: "not found" });
-      if (!canSee(req.user.id, original))
+      if (!(await canSee(req.user.id, original)))
         return reply.code(403).send({ error: "forbidden" });
       const Body = z.object({
         caption: z.string().max(1000).nullable().optional(),
@@ -210,49 +214,50 @@ export async function postRoutes(app: FastifyInstance) {
       });
       const parsed = Body.safeParse(req.body ?? {});
       if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
-      // Reposts inherit the original's visibility ceiling — can't be more public than the source.
       const order = { private: 0, followers: 1, public: 2 } as const;
       const requested = parsed.data.visibility ?? "followers";
       const vis =
         order[requested] > order[original.visibility] ? original.visibility : requested;
-      const r = db
-        .prepare(
-          `INSERT INTO posts (user_id, visibility, caption, repost_of_id)
-           VALUES (?, ?, ?, ?)`,
-        )
-        .run(req.user.id, vis, parsed.data.caption ?? null, id);
+      const newId = await qInsertId(
+        `INSERT INTO posts (user_id, visibility, caption, repost_of_id)
+         VALUES (?, ?, ?, ?) RETURNING id`,
+        [req.user.id, vis, parsed.data.caption ?? null, id],
+      );
       if (original.user_id !== req.user.id) {
-        db.prepare(
+        await q(
           "INSERT INTO notifications (user_id, actor_id, type, post_id) VALUES (?, ?, 'kudos', ?)",
-        ).run(original.user_id, req.user.id, id);
+          [original.user_id, req.user.id, id],
+        );
       }
-      const post = db.prepare("SELECT * FROM posts WHERE id = ?").get(r.lastInsertRowid) as Post;
+      const post = (await qOne<Post>("SELECT * FROM posts WHERE id = ?", [newId]))!;
       return hydratePost(post, req.user.id);
     },
   );
 
-  // Kudos — with self-like prevention + notification
+  // Kudos
   app.post<{ Params: { id: string } }>(
     "/:id/kudos",
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const post = db.prepare("SELECT * FROM posts WHERE id = ?").get(id) as Post | undefined;
+      const post = await qOne<Post>("SELECT * FROM posts WHERE id = ?", [id]);
       if (!post) return reply.code(404).send({ error: "not found" });
       if (post.user_id === req.user.id)
         return reply.code(400).send({ error: "cannot kudos your own post" });
-      if (!canSee(req.user.id, post)) return reply.code(403).send({ error: "forbidden" });
-      const before = db
-        .prepare("SELECT 1 FROM kudos WHERE post_id = ? AND user_id = ?")
-        .get(id, req.user.id);
-      db.prepare("INSERT OR IGNORE INTO kudos (post_id, user_id) VALUES (?, ?)").run(
-        id,
-        req.user.id,
+      if (!(await canSee(req.user.id, post))) return reply.code(403).send({ error: "forbidden" });
+      const before = await qOne(
+        "SELECT 1 FROM kudos WHERE post_id = ? AND user_id = ?",
+        [id, req.user.id],
+      );
+      await q(
+        "INSERT INTO kudos (post_id, user_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+        [id, req.user.id],
       );
       if (!before) {
-        db.prepare(
+        await q(
           "INSERT INTO notifications (user_id, actor_id, type, post_id) VALUES (?, ?, 'kudos', ?)",
-        ).run(post.user_id, req.user.id, id);
+          [post.user_id, req.user.id, id],
+        );
       }
       return { ok: true };
     },
@@ -263,7 +268,7 @@ export async function postRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      db.prepare("DELETE FROM kudos WHERE post_id = ? AND user_id = ?").run(id, req.user.id);
+      await q("DELETE FROM kudos WHERE post_id = ? AND user_id = ?", [id, req.user.id]);
       return { ok: true };
     },
   );
@@ -276,17 +281,15 @@ export async function postRoutes(app: FastifyInstance) {
       await req.jwtVerify();
       viewerId = req.user.id;
     } catch {}
-    const post = db.prepare("SELECT * FROM posts WHERE id = ?").get(id) as Post | undefined;
+    const post = await qOne<Post>("SELECT * FROM posts WHERE id = ?", [id]);
     if (!post) return reply.code(404).send({ error: "not found" });
-    if (!canSee(viewerId, post)) return reply.code(403).send({ error: "forbidden" });
-    const rows = db
-      .prepare(
-        `SELECT c.*, u.handle, u.display_name, u.avatar_seed
-         FROM comments c JOIN users u ON u.id = c.user_id
-         WHERE c.post_id = ? ORDER BY c.id ASC`,
-      )
-      .all(id);
-    return rows;
+    if (!(await canSee(viewerId, post))) return reply.code(403).send({ error: "forbidden" });
+    return qAll(
+      `SELECT c.*, u.handle, u.display_name, u.avatar_seed, u.avatar_url
+       FROM comments c JOIN users u ON u.id = c.user_id
+       WHERE c.post_id = ? ORDER BY c.id ASC`,
+      [id],
+    );
   });
 
   app.post<{ Params: { id: string } }>(
@@ -296,23 +299,24 @@ export async function postRoutes(app: FastifyInstance) {
       const id = Number(req.params.id);
       const parsed = CommentBody.safeParse(req.body);
       if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
-      const post = db.prepare("SELECT * FROM posts WHERE id = ?").get(id) as Post | undefined;
+      const post = await qOne<Post>("SELECT * FROM posts WHERE id = ?", [id]);
       if (!post) return reply.code(404).send({ error: "not found" });
-      if (!canSee(req.user.id, post)) return reply.code(403).send({ error: "forbidden" });
-      const r = db
-        .prepare("INSERT INTO comments (post_id, user_id, body) VALUES (?, ?, ?)")
-        .run(id, req.user.id, parsed.data.body);
+      if (!(await canSee(req.user.id, post))) return reply.code(403).send({ error: "forbidden" });
+      const cid = await qInsertId(
+        "INSERT INTO comments (post_id, user_id, body) VALUES (?, ?, ?) RETURNING id",
+        [id, req.user.id, parsed.data.body],
+      );
       if (post.user_id !== req.user.id) {
-        db.prepare(
+        await q(
           "INSERT INTO notifications (user_id, actor_id, type, post_id, comment_id) VALUES (?, ?, 'comment', ?, ?)",
-        ).run(post.user_id, req.user.id, id, r.lastInsertRowid);
+          [post.user_id, req.user.id, id, cid],
+        );
       }
-      return db
-        .prepare(
-          `SELECT c.*, u.handle, u.display_name, u.avatar_seed
-           FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = ?`,
-        )
-        .get(r.lastInsertRowid);
+      return qOne(
+        `SELECT c.*, u.handle, u.display_name, u.avatar_seed, u.avatar_url
+         FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = ?`,
+        [cid],
+      );
     },
   );
 
@@ -323,20 +327,21 @@ export async function postRoutes(app: FastifyInstance) {
       const cid = Number(req.params.cid);
       const parsed = CommentBody.safeParse(req.body);
       if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
-      const c = db.prepare("SELECT user_id FROM comments WHERE id = ?").get(cid) as
-        | { user_id: number }
-        | undefined;
+      const c = await qOne<{ user_id: number }>(
+        "SELECT user_id FROM comments WHERE id = ?",
+        [cid],
+      );
       if (!c) return reply.code(404).send({ error: "not found" });
       if (c.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
-      db.prepare(
-        "UPDATE comments SET body = ?, updated_at = datetime('now') WHERE id = ?",
-      ).run(parsed.data.body, cid);
-      return db
-        .prepare(
-          `SELECT c.*, u.handle, u.display_name, u.avatar_seed
-           FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = ?`,
-        )
-        .get(cid);
+      await q("UPDATE comments SET body = ?, updated_at = now() WHERE id = ?", [
+        parsed.data.body,
+        cid,
+      ]);
+      return qOne(
+        `SELECT c.*, u.handle, u.display_name, u.avatar_seed, u.avatar_url
+         FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = ?`,
+        [cid],
+      );
     },
   );
 
@@ -345,12 +350,13 @@ export async function postRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const cid = Number(req.params.cid);
-      const c = db.prepare("SELECT user_id FROM comments WHERE id = ?").get(cid) as
-        | { user_id: number }
-        | undefined;
+      const c = await qOne<{ user_id: number }>(
+        "SELECT user_id FROM comments WHERE id = ?",
+        [cid],
+      );
       if (!c) return reply.code(404).send({ error: "not found" });
       if (c.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
-      db.prepare("DELETE FROM comments WHERE id = ?").run(cid);
+      await q("DELETE FROM comments WHERE id = ?", [cid]);
       return { ok: true };
     },
   );

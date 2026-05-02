@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { db } from "../db.js";
+import { q, qAll, qInsertId, qOne } from "../db.js";
 import type { Pole } from "../types.js";
 
 const PoleBody = z.object({
@@ -16,35 +16,31 @@ const ACTIVE = "deleted_at IS NULL";
 
 export async function poleRoutes(app: FastifyInstance) {
   app.get("/mine", { preHandler: (app as any).auth }, async (req: any) => {
-    return db
-      .prepare(
-        `SELECT * FROM poles WHERE user_id = ? AND ${ACTIVE} ORDER BY retired ASC, weight_lb DESC`,
-      )
-      .all(req.user.id);
+    return qAll<Pole>(
+      `SELECT * FROM poles WHERE user_id = ? AND ${ACTIVE} ORDER BY retired ASC, weight_lb DESC`,
+      [req.user.id],
+    );
   });
 
   app.get<{ Params: { handle: string } }>("/by/:handle", async (req, reply) => {
-    const user = db.prepare("SELECT id FROM users WHERE handle = ?").get(req.params.handle) as
-      | { id: number }
-      | undefined;
+    const user = await qOne<{ id: number }>("SELECT id FROM users WHERE handle = ?", [
+      req.params.handle,
+    ]);
     if (!user) return reply.code(404).send({ error: "not found" });
-    return db
-      .prepare(
-        `SELECT * FROM poles WHERE user_id = ? AND ${ACTIVE} ORDER BY retired ASC, weight_lb DESC`,
-      )
-      .all(user.id);
+    return qAll<Pole>(
+      `SELECT * FROM poles WHERE user_id = ? AND ${ACTIVE} ORDER BY retired ASC, weight_lb DESC`,
+      [user.id],
+    );
   });
 
   app.post("/", { preHandler: (app as any).auth }, async (req: any, reply) => {
     const parsed = PoleBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     const p = parsed.data;
-    const r = db
-      .prepare(
-        `INSERT INTO poles (user_id, make, length_in, weight_lb, flex, nickname, retired)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
+    const id = await qInsertId(
+      `INSERT INTO poles (user_id, make, length_in, weight_lb, flex, nickname, retired)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      [
         req.user.id,
         p.make,
         p.length_in,
@@ -52,8 +48,9 @@ export async function poleRoutes(app: FastifyInstance) {
         p.flex ?? null,
         p.nickname ?? null,
         p.retired ? 1 : 0,
-      );
-    return db.prepare("SELECT * FROM poles WHERE id = ?").get(r.lastInsertRowid);
+      ],
+    );
+    return qOne<Pole>("SELECT * FROM poles WHERE id = ?", [id]);
   });
 
   app.patch<{ Params: { id: string } }>(
@@ -61,7 +58,7 @@ export async function poleRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const pole = db.prepare("SELECT * FROM poles WHERE id = ?").get(id) as Pole | undefined;
+      const pole = await qOne<Pole>("SELECT * FROM poles WHERE id = ?", [id]);
       if (!pole) return reply.code(404).send({ error: "not found" });
       if (pole.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
 
@@ -69,7 +66,7 @@ export async function poleRoutes(app: FastifyInstance) {
       if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
       const p = parsed.data;
 
-      db.prepare(
+      await q(
         `UPDATE poles SET
           make = COALESCE(?, make),
           length_in = COALESCE(?, length_in),
@@ -78,16 +75,17 @@ export async function poleRoutes(app: FastifyInstance) {
           nickname = COALESCE(?, nickname),
           retired = COALESCE(?, retired)
          WHERE id = ?`,
-      ).run(
-        p.make ?? null,
-        p.length_in ?? null,
-        p.weight_lb ?? null,
-        p.flex ?? null,
-        p.nickname ?? null,
-        p.retired === undefined ? null : p.retired ? 1 : 0,
-        id,
+        [
+          p.make ?? null,
+          p.length_in ?? null,
+          p.weight_lb ?? null,
+          p.flex ?? null,
+          p.nickname ?? null,
+          p.retired === undefined ? null : p.retired ? 1 : 0,
+          id,
+        ],
       );
-      return db.prepare("SELECT * FROM poles WHERE id = ?").get(id);
+      return qOne<Pole>("SELECT * FROM poles WHERE id = ?", [id]);
     },
   );
 
@@ -97,10 +95,10 @@ export async function poleRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const pole = db.prepare("SELECT * FROM poles WHERE id = ?").get(id) as Pole | undefined;
+      const pole = await qOne<Pole>("SELECT * FROM poles WHERE id = ?", [id]);
       if (!pole) return reply.code(404).send({ error: "not found" });
       if (pole.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
-      db.prepare("UPDATE poles SET deleted_at = datetime('now') WHERE id = ?").run(id);
+      await q("UPDATE poles SET deleted_at = now() WHERE id = ?", [id]);
       return { ok: true };
     },
   );
@@ -111,11 +109,11 @@ export async function poleRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const pole = db.prepare("SELECT * FROM poles WHERE id = ?").get(id) as Pole | undefined;
+      const pole = await qOne<Pole>("SELECT * FROM poles WHERE id = ?", [id]);
       if (!pole) return reply.code(404).send({ error: "not found" });
       if (pole.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
-      db.prepare("UPDATE poles SET deleted_at = NULL WHERE id = ?").run(id);
-      return db.prepare("SELECT * FROM poles WHERE id = ?").get(id);
+      await q("UPDATE poles SET deleted_at = NULL WHERE id = ?", [id]);
+      return qOne<Pole>("SELECT * FROM poles WHERE id = ?", [id]);
     },
   );
 }

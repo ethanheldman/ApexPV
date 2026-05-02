@@ -40,11 +40,7 @@ function tryRun(cmd, cwd, why) {
 run("npm install --no-audit --no-fund", server);
 run("npm install --no-audit --no-fund", client);
 
-// 2. Rebuild better-sqlite3 against the active Node ABI (only meaningful when
-//    a different Node version is in use, e.g. across local <-> deploy).
-tryRun("npm rebuild better-sqlite3", server, "better-sqlite3 rebuild");
-
-// 3. Build the client. Skip locally if dist already exists and we're not on a
+// 2. Build the client. Skip locally if dist already exists and we're not on a
 //    deploy host — saves ~10s on every `npm install` during development.
 const distIndex = path.join(client, "dist", "index.html");
 const isDeploy = !!process.env.RENDER || !!process.env.CI || !!process.env.VERCEL;

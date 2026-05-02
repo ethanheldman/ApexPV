@@ -6,8 +6,9 @@ import staticPlugin from "@fastify/static";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { initSchema } from "./db.js";
-import { uploadRoutes, UPLOAD_DIR } from "./routes/uploads.js";
+import { pool } from "./db.js";
+import { seedIfEmpty } from "./seed.js";
+import { uploadRoutes } from "./routes/uploads.js";
 import { authRoutes } from "./routes/auth.js";
 import { userRoutes } from "./routes/users.js";
 import { poleRoutes } from "./routes/poles.js";
@@ -24,25 +25,20 @@ import { calcRoutes } from "./routes/calc.js";
 const PORT = Number(process.env.PORT ?? 4011);
 const JWT_SECRET = process.env.JWT_SECRET ?? "apex-dev-secret-do-not-use-in-prod";
 
-// Path to the on-disk SQLite database file.
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbFile = path.resolve(__dirname, "../apex.db");
-
-initSchema();
-
-// Auto-seed when the users table is empty so a fresh deploy has demo data.
-// Uses a fresh connection (separate from the db.ts singleton) just to count;
-// the actual seed module imports the singleton itself.
-{
-  const Database = (await import("better-sqlite3")).default;
-  const probe = Database(dbFile, { readonly: true });
-  const row = probe.prepare("SELECT COUNT(*) AS c FROM users").get() as { c: number };
-  probe.close();
-  if (row.c === 0) {
-    console.log("[apex] empty database — running seed...");
-    await import("./seed.js");
-  }
+// Warm up the Postgres pool with a single ping so a bad DATABASE_URL fails fast
+// instead of breaking on first request.
+try {
+  await pool.query("SELECT 1");
+  console.log("[apex] Postgres connection OK");
+} catch (e: any) {
+  console.error(
+    "[apex] Postgres connection failed. Check DATABASE_URL.\n",
+    e.message ?? e,
+  );
+  process.exit(1);
 }
+
+await seedIfEmpty();
 
 const app = Fastify({ logger: true });
 
@@ -50,26 +46,20 @@ await app.register(cors, { origin: true, credentials: true });
 await app.register(jwt, { secret: JWT_SECRET });
 await app.register(multipart, {
   limits: {
-    fileSize: 200 * 1024 * 1024, // 200 MB cap per upload
+    fileSize: 200 * 1024 * 1024,
     files: 1,
   },
 });
 
-// Serve uploaded videos at /uploads/*
-await app.register(staticPlugin, {
-  root: UPLOAD_DIR,
-  prefix: "/uploads/",
-  decorateReply: true, // first plugin registers reply.sendFile
-});
-
 // Production: serve the built client (vite build output) at /
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDist = path.resolve(__dirname, "../../client/dist");
 const serveClient = existsSync(path.join(clientDist, "index.html"));
 if (serveClient) {
   await app.register(staticPlugin, {
     root: clientDist,
     prefix: "/",
-    decorateReply: false,
+    decorateReply: true,
   });
 }
 
@@ -109,12 +99,9 @@ if (serveClient) {
 }
 
 try {
-  // Bind 0.0.0.0 so the same-WiFi iPhone can reach the API directly if needed.
-  // (The Vite dev proxy is the primary path; this is just a safety net.)
   await app.listen({ port: PORT, host: "0.0.0.0" });
   app.log.info(`Apex API running on http://0.0.0.0:${PORT}`);
 
-  // Print every reachable LAN URL so the user can open it on their phone.
   const os = await import("node:os");
   const nets = os.networkInterfaces();
   const lan: string[] = [];

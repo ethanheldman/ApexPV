@@ -46,7 +46,14 @@ export function mmToMeters(mm: number | null | undefined): string {
 }
 
 export function relTime(iso: string): string {
-  const d = new Date(iso.replace(" ", "T") + "Z");
+  // Accepts both ISO ("2026-04-30T12:34:56.000Z" — Postgres) and the legacy
+  // SQLite format ("2026-04-30 12:34:56", treated as UTC).
+  let d: Date;
+  if (iso.includes("T") || iso.endsWith("Z")) {
+    d = new Date(iso);
+  } else {
+    d = new Date(iso.replace(" ", "T") + "Z");
+  }
   const diffMs = Date.now() - d.getTime();
   const m = Math.floor(diffMs / 60000);
   if (m < 1) return "just now";

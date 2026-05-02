@@ -1,12 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db } from "../db.js";
+import { q, qInsertId, qOne } from "../db.js";
 import type { User } from "../types.js";
 
 const SignupBody = z.object({
-  // Allow letters/digits + most punctuation; block only whitespace and chars
-  // that break URLs/paths (so /u/<handle> stays unambiguous).
   handle: z
     .string()
     .min(2)
@@ -39,31 +37,20 @@ export async function authRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     const { handle, email, password, display_name, school, gender, level, bio } = parsed.data;
 
-    const exists = db
-      .prepare("SELECT id FROM users WHERE handle = ? OR email = ?")
-      .get(handle, email);
+    const exists = await qOne(
+      "SELECT id FROM users WHERE handle = ? OR email = ?",
+      [handle, email],
+    );
     if (exists) return reply.code(409).send({ error: "handle or email taken" });
 
     const hash = bcrypt.hashSync(password, 10);
     const seed = handle.toLowerCase();
-    const result = db
-      .prepare(
-        `INSERT INTO users (handle, email, password_hash, display_name, school, bio, gender, level, avatar_seed)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
-        handle,
-        email,
-        hash,
-        display_name,
-        school ?? null,
-        bio ?? null,
-        gender ?? null,
-        level ?? null,
-        seed,
-      );
-
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(result.lastInsertRowid) as User;
+    const id = await qInsertId(
+      `INSERT INTO users (handle, email, password_hash, display_name, school, bio, gender, level, avatar_seed)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      [handle, email, hash, display_name, school ?? null, bio ?? null, gender ?? null, level ?? null, seed],
+    );
+    const user = (await qOne<User>("SELECT * FROM users WHERE id = ?", [id]))!;
     const token = app.jwt.sign({ id: user.id, handle: user.handle });
     return { token, user: publicUser(user) };
   });
@@ -73,9 +60,10 @@ export async function authRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     const { handle, password } = parsed.data;
 
-    const row = db
-      .prepare("SELECT * FROM users WHERE handle = ? OR email = ?")
-      .get(handle, handle) as (User & { password_hash: string }) | undefined;
+    const row = await qOne<User & { password_hash: string }>(
+      "SELECT * FROM users WHERE handle = ? OR email = ?",
+      [handle, handle],
+    );
     if (!row) return reply.code(401).send({ error: "invalid credentials" });
     const ok = bcrypt.compareSync(password, row.password_hash);
     if (!ok) return reply.code(401).send({ error: "invalid credentials" });
@@ -85,8 +73,8 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   app.get("/me", { preHandler: (app as any).auth }, async (req: any) => {
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.user.id) as User;
-    return publicUser(user);
+    const user = await qOne<User>("SELECT * FROM users WHERE id = ?", [req.user.id]);
+    return publicUser(user!);
   });
 
   // Profile / account update
@@ -107,12 +95,13 @@ export async function authRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     const p = parsed.data;
     if (p.email) {
-      const taken = db
-        .prepare("SELECT id FROM users WHERE email = ? AND id != ?")
-        .get(p.email, req.user.id);
+      const taken = await qOne(
+        "SELECT id FROM users WHERE email = ? AND id != ?",
+        [p.email, req.user.id],
+      );
       if (taken) return reply.code(409).send({ error: "email taken" });
     }
-    db.prepare(
+    await q(
       `UPDATE users SET
         display_name = COALESCE(?, display_name),
         school       = COALESCE(?, school),
@@ -125,21 +114,22 @@ export async function authRoutes(app: FastifyInstance) {
         weight_lb    = COALESCE(?, weight_lb),
         unit_pref    = COALESCE(?, unit_pref)
        WHERE id = ?`,
-    ).run(
-      p.display_name ?? null,
-      p.school === undefined ? null : p.school,
-      p.bio === undefined ? null : p.bio,
-      p.gender === undefined ? null : p.gender,
-      p.level === undefined ? null : p.level,
-      p.email ?? null,
-      p.avatar_url === undefined ? null : p.avatar_url,
-      p.height_cm === undefined ? null : p.height_cm,
-      p.weight_lb === undefined ? null : p.weight_lb,
-      p.unit_pref ?? null,
-      req.user.id,
+      [
+        p.display_name ?? null,
+        p.school === undefined ? null : p.school,
+        p.bio === undefined ? null : p.bio,
+        p.gender === undefined ? null : p.gender,
+        p.level === undefined ? null : p.level,
+        p.email ?? null,
+        p.avatar_url === undefined ? null : p.avatar_url,
+        p.height_cm === undefined ? null : p.height_cm,
+        p.weight_lb === undefined ? null : p.weight_lb,
+        p.unit_pref ?? null,
+        req.user.id,
+      ],
     );
-    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.user.id) as User;
-    return publicUser(user);
+    const user = await qOne<User>("SELECT * FROM users WHERE id = ?", [req.user.id]);
+    return publicUser(user!);
   });
 
   // Password change
@@ -147,15 +137,16 @@ export async function authRoutes(app: FastifyInstance) {
     const Body = z.object({ current: z.string(), next: z.string().min(6) });
     const parsed = Body.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
-    const u = db.prepare("SELECT password_hash FROM users WHERE id = ?").get(req.user.id) as
-      | { password_hash: string }
-      | undefined;
+    const u = await qOne<{ password_hash: string }>(
+      "SELECT password_hash FROM users WHERE id = ?",
+      [req.user.id],
+    );
     if (!u || !bcrypt.compareSync(parsed.data.current, u.password_hash))
       return reply.code(401).send({ error: "current password incorrect" });
-    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(
+    await q("UPDATE users SET password_hash = ? WHERE id = ?", [
       bcrypt.hashSync(parsed.data.next, 10),
       req.user.id,
-    );
+    ]);
     return { ok: true };
   });
 }

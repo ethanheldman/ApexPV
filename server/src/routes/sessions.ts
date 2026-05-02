@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { db } from "../db.js";
+import { q, qAll, qInsertId, qOne } from "../db.js";
 import type { Session, Attempt } from "../types.js";
 
 const SessionBody = z.object({
@@ -22,12 +22,10 @@ export async function sessionRoutes(app: FastifyInstance) {
     const parsed = SessionBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     const s = parsed.data;
-    const r = db
-      .prepare(
-        `INSERT INTO sessions (user_id, type, date, location, surface, wind_ms, temp_f, energy, notes, cues_had, cues_work, meet_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .run(
+    const id = await qInsertId(
+      `INSERT INTO sessions (user_id, type, date, location, surface, wind_ms, temp_f, energy, notes, cues_had, cues_work, meet_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      [
         req.user.id,
         s.type,
         s.date,
@@ -40,8 +38,9 @@ export async function sessionRoutes(app: FastifyInstance) {
         s.cues_had ?? null,
         s.cues_work ?? null,
         s.meet_id ?? null,
-      );
-    return db.prepare("SELECT * FROM sessions WHERE id = ?").get(r.lastInsertRowid);
+      ],
+    );
+    return qOne<Session>("SELECT * FROM sessions WHERE id = ?", [id]);
   });
 
   app.patch<{ Params: { id: string } }>(
@@ -49,15 +48,13 @@ export async function sessionRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const s = db.prepare("SELECT user_id FROM sessions WHERE id = ?").get(id) as
-        | { user_id: number }
-        | undefined;
+      const s = await qOne<{ user_id: number }>("SELECT user_id FROM sessions WHERE id = ?", [id]);
       if (!s) return reply.code(404).send({ error: "not found" });
       if (s.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
       const parsed = SessionBody.partial().safeParse(req.body);
       if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
       const p = parsed.data;
-      db.prepare(
+      await q(
         `UPDATE sessions SET
           type      = COALESCE(?, type),
           date      = COALESCE(?, date),
@@ -71,51 +68,52 @@ export async function sessionRoutes(app: FastifyInstance) {
           cues_work = COALESCE(?, cues_work),
           meet_id   = COALESCE(?, meet_id)
          WHERE id = ?`,
-      ).run(
-        p.type ?? null,
-        p.date ?? null,
-        p.location === undefined ? null : p.location,
-        p.surface === undefined ? null : p.surface,
-        p.wind_ms === undefined ? null : p.wind_ms,
-        p.temp_f === undefined ? null : p.temp_f,
-        p.energy === undefined ? null : p.energy,
-        p.notes === undefined ? null : p.notes,
-        p.cues_had === undefined ? null : p.cues_had,
-        p.cues_work === undefined ? null : p.cues_work,
-        p.meet_id === undefined ? null : p.meet_id,
-        id,
+        [
+          p.type ?? null,
+          p.date ?? null,
+          p.location === undefined ? null : p.location,
+          p.surface === undefined ? null : p.surface,
+          p.wind_ms === undefined ? null : p.wind_ms,
+          p.temp_f === undefined ? null : p.temp_f,
+          p.energy === undefined ? null : p.energy,
+          p.notes === undefined ? null : p.notes,
+          p.cues_had === undefined ? null : p.cues_had,
+          p.cues_work === undefined ? null : p.cues_work,
+          p.meet_id === undefined ? null : p.meet_id,
+          id,
+        ],
       );
-      return db.prepare("SELECT * FROM sessions WHERE id = ?").get(id);
+      return qOne<Session>("SELECT * FROM sessions WHERE id = ?", [id]);
     },
   );
 
   app.get<{ Params: { id: string } }>("/:id", async (req: any, reply) => {
     const id = Number(req.params.id);
-    const session = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) as Session;
+    const session = await qOne<Session>("SELECT * FROM sessions WHERE id = ?", [id]);
     if (!session) return reply.code(404).send({ error: "not found" });
     let viewerId: number | null = null;
     try {
       await req.jwtVerify();
       viewerId = req.user.id;
     } catch {}
-    const attempts = db
-      .prepare("SELECT * FROM attempts WHERE session_id = ? ORDER BY ordinal ASC, id ASC")
-      .all(id) as Attempt[];
-    const owner = db
-      .prepare("SELECT handle, display_name, avatar_seed, avatar_url FROM users WHERE id = ?")
-      .get(session.user_id);
+    const attempts = await qAll<Attempt>(
+      "SELECT * FROM attempts WHERE session_id = ? ORDER BY ordinal ASC, id ASC",
+      [id],
+    );
+    const owner = await qOne(
+      "SELECT handle, display_name, avatar_seed, avatar_url FROM users WHERE id = ?",
+      [session.user_id],
+    );
     const meet = session.meet_id
-      ? db.prepare("SELECT * FROM meets WHERE id = ?").get(session.meet_id)
+      ? await qOne("SELECT * FROM meets WHERE id = ?", [session.meet_id])
       : null;
-    // The auto-generated post for meet sessions, if present
     const autoPost =
       session.type === "meet"
-        ? (db
-            .prepare(
-              "SELECT id FROM posts WHERE session_id = ? AND user_id = ? ORDER BY id DESC LIMIT 1",
-            )
-            .get(session.id, session.user_id) as { id: number } | undefined)
-        : undefined;
+        ? await qOne<{ id: number }>(
+            "SELECT id FROM posts WHERE session_id = ? AND user_id = ? ORDER BY id DESC LIMIT 1",
+            [session.id, session.user_id],
+          )
+        : null;
     return {
       ...session,
       attempts,
@@ -127,19 +125,21 @@ export async function sessionRoutes(app: FastifyInstance) {
   });
 
   app.get("/mine/list", { preHandler: (app as any).auth }, async (req: any) => {
-    return db
-      .prepare("SELECT * FROM sessions WHERE user_id = ? ORDER BY date DESC, id DESC")
-      .all(req.user.id);
+    return qAll<Session>(
+      "SELECT * FROM sessions WHERE user_id = ? ORDER BY date DESC, id DESC",
+      [req.user.id],
+    );
   });
 
   app.get<{ Params: { handle: string } }>("/by/:handle", async (req, reply) => {
-    const user = db.prepare("SELECT id FROM users WHERE handle = ?").get(req.params.handle) as
-      | { id: number }
-      | undefined;
+    const user = await qOne<{ id: number }>("SELECT id FROM users WHERE handle = ?", [
+      req.params.handle,
+    ]);
     if (!user) return reply.code(404).send({ error: "not found" });
-    return db
-      .prepare("SELECT * FROM sessions WHERE user_id = ? ORDER BY date DESC, id DESC")
-      .all(user.id);
+    return qAll<Session>(
+      "SELECT * FROM sessions WHERE user_id = ? ORDER BY date DESC, id DESC",
+      [user.id],
+    );
   });
 
   app.delete<{ Params: { id: string } }>(
@@ -147,12 +147,10 @@ export async function sessionRoutes(app: FastifyInstance) {
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
       const id = Number(req.params.id);
-      const s = db.prepare("SELECT user_id FROM sessions WHERE id = ?").get(id) as
-        | { user_id: number }
-        | undefined;
+      const s = await qOne<{ user_id: number }>("SELECT user_id FROM sessions WHERE id = ?", [id]);
       if (!s) return reply.code(404).send({ error: "not found" });
       if (s.user_id !== req.user.id) return reply.code(403).send({ error: "forbidden" });
-      db.prepare("DELETE FROM sessions WHERE id = ?").run(id);
+      await q("DELETE FROM sessions WHERE id = ?", [id]);
       return { ok: true };
     },
   );

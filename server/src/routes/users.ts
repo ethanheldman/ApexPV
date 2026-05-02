@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { db } from "../db.js";
+import { q, qAll, qOne } from "../db.js";
 import type { User } from "../types.js";
 
 function publicUser(u: any) {
@@ -11,21 +11,24 @@ function publicUser(u: any) {
 export async function userRoutes(app: FastifyInstance) {
   // Public profile by handle
   app.get<{ Params: { handle: string } }>("/:handle", async (req, reply) => {
-    const u = db.prepare("SELECT * FROM users WHERE handle = ?").get(req.params.handle) as User;
+    const u = await qOne<User>("SELECT * FROM users WHERE handle = ?", [req.params.handle]);
     if (!u) return reply.code(404).send({ error: "not found" });
 
-    const followers = (db
-      .prepare("SELECT COUNT(*) as c FROM follows WHERE followee_id = ?")
-      .get(u.id) as any).c as number;
-    const following = (db
-      .prepare("SELECT COUNT(*) as c FROM follows WHERE follower_id = ?")
-      .get(u.id) as any).c as number;
-    const total_attempts = (db
-      .prepare("SELECT COUNT(*) as c FROM attempts WHERE user_id = ?")
-      .get(u.id) as any).c as number;
-    const total_clearances = (db
-      .prepare("SELECT COUNT(*) as c FROM attempts WHERE user_id = ? AND result = 'clear'")
-      .get(u.id) as any).c as number;
+    const followers = (
+      await qOne<{ c: number }>("SELECT COUNT(*)::int as c FROM follows WHERE followee_id = ?", [u.id])
+    )!.c;
+    const following = (
+      await qOne<{ c: number }>("SELECT COUNT(*)::int as c FROM follows WHERE follower_id = ?", [u.id])
+    )!.c;
+    const total_attempts = (
+      await qOne<{ c: number }>("SELECT COUNT(*)::int as c FROM attempts WHERE user_id = ?", [u.id])
+    )!.c;
+    const total_clearances = (
+      await qOne<{ c: number }>(
+        "SELECT COUNT(*)::int as c FROM attempts WHERE user_id = ? AND result = 'clear'",
+        [u.id],
+      )
+    )!.c;
 
     return { ...publicUser(u), followers, following, total_attempts, total_clearances };
   });
@@ -34,7 +37,7 @@ export async function userRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { gender?: string; level?: string; q?: string } }>(
     "/",
     async (req) => {
-      const { gender, level, q } = req.query;
+      const { gender, level, q: search } = req.query;
       const where: string[] = [];
       const params: any[] = [];
       if (gender) {
@@ -45,16 +48,16 @@ export async function userRoutes(app: FastifyInstance) {
         where.push("level = ?");
         params.push(level);
       }
-      if (q) {
-        where.push("(handle LIKE ? OR display_name LIKE ? OR school LIKE ?)");
-        const t = `%${q}%`;
+      if (search) {
+        where.push("(handle ILIKE ? OR display_name ILIKE ? OR school ILIKE ?)");
+        const t = `%${search}%`;
         params.push(t, t, t);
       }
       const sql =
         "SELECT * FROM users" +
         (where.length ? ` WHERE ${where.join(" AND ")}` : "") +
         " ORDER BY (pr_height_mm IS NULL), pr_height_mm DESC";
-      const rows = db.prepare(sql).all(...params) as User[];
+      const rows = await qAll<User>(sql, params);
       return rows.map(publicUser);
     },
   );
@@ -63,13 +66,11 @@ export async function userRoutes(app: FastifyInstance) {
   app.get("/demo/summary", async () => {
     const handles = ["mona", "kai", "jules", "demo"];
     const ph = handles.map(() => "?").join(",");
-    const rows = db
-      .prepare(
-        `SELECT handle, display_name, school, pr_height_mm, level
-         FROM users WHERE handle IN (${ph})`,
-      )
-      .all(...handles);
-    return rows;
+    return qAll(
+      `SELECT handle, display_name, school, pr_height_mm, level
+       FROM users WHERE handle IN (${ph})`,
+      handles,
+    );
   });
 
   // Follow / unfollow
@@ -77,22 +78,24 @@ export async function userRoutes(app: FastifyInstance) {
     "/:handle/follow",
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
-      const target = db.prepare("SELECT id FROM users WHERE handle = ?").get(req.params.handle) as
-        | { id: number }
-        | undefined;
+      const target = await qOne<{ id: number }>("SELECT id FROM users WHERE handle = ?", [
+        req.params.handle,
+      ]);
       if (!target) return reply.code(404).send({ error: "not found" });
       if (target.id === req.user.id) return reply.code(400).send({ error: "cannot follow self" });
-      const existing = db
-        .prepare("SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?")
-        .get(req.user.id, target.id);
-      db.prepare("INSERT OR IGNORE INTO follows (follower_id, followee_id) VALUES (?, ?)").run(
-        req.user.id,
-        target.id,
+      const existing = await qOne(
+        "SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?",
+        [req.user.id, target.id],
+      );
+      await q(
+        "INSERT INTO follows (follower_id, followee_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+        [req.user.id, target.id],
       );
       if (!existing) {
-        db.prepare(
+        await q(
           "INSERT INTO notifications (user_id, actor_id, type) VALUES (?, ?, 'follow')",
-        ).run(target.id, req.user.id);
+          [target.id, req.user.id],
+        );
       }
       return { ok: true };
     },
@@ -102,14 +105,14 @@ export async function userRoutes(app: FastifyInstance) {
     "/:handle/follow",
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
-      const target = db.prepare("SELECT id FROM users WHERE handle = ?").get(req.params.handle) as
-        | { id: number }
-        | undefined;
+      const target = await qOne<{ id: number }>("SELECT id FROM users WHERE handle = ?", [
+        req.params.handle,
+      ]);
       if (!target) return reply.code(404).send({ error: "not found" });
-      db.prepare("DELETE FROM follows WHERE follower_id = ? AND followee_id = ?").run(
+      await q("DELETE FROM follows WHERE follower_id = ? AND followee_id = ?", [
         req.user.id,
         target.id,
-      );
+      ]);
       return { ok: true };
     },
   );
@@ -118,13 +121,14 @@ export async function userRoutes(app: FastifyInstance) {
     "/:handle/follow-status",
     { preHandler: (app as any).auth },
     async (req: any, reply) => {
-      const target = db.prepare("SELECT id FROM users WHERE handle = ?").get(req.params.handle) as
-        | { id: number }
-        | undefined;
+      const target = await qOne<{ id: number }>("SELECT id FROM users WHERE handle = ?", [
+        req.params.handle,
+      ]);
       if (!target) return reply.code(404).send({ error: "not found" });
-      const row = db
-        .prepare("SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?")
-        .get(req.user.id, target.id);
+      const row = await qOne(
+        "SELECT 1 FROM follows WHERE follower_id = ? AND followee_id = ?",
+        [req.user.id, target.id],
+      );
       return { following: !!row };
     },
   );
