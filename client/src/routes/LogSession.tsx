@@ -7,6 +7,7 @@ import NotFound from "../components/NotFound";
 import Avatar from "../components/Avatar";
 import ConfirmDialog from "../components/ConfirmDialog";
 import VideoDrop from "../components/VideoDrop";
+import AddPoleDialog from "../components/AddPoleDialog";
 import { ftInToMm, mmToFtIn, poleLenToFtIn, inchesToFtIn, ftInToInches, todayLocal } from "../lib/format";
 import { useUnit } from "../lib/unit";
 import { MISS_TAG_GROUPS } from "../lib/missTags";
@@ -33,6 +34,7 @@ export default function LogSession() {
   const [savedNote, setSavedNote] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Attempt | null>(null);
   const [meetMatches, setMeetMatches] = useState<Meet[]>([]);
+  const [addPoleOpen, setAddPoleOpen] = useState(false);
 
   const [meta, setMeta] = useState({
     type: "practice" as Session["type"],
@@ -484,19 +486,29 @@ export default function LogSession() {
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <div className="label mb-1">pole</div>
-            <select
-              className="input"
-              value={att.poleId}
-              onChange={(e) => setAtt({ ...att, poleId: Number(e.target.value) })}
-            >
-              <option value={0}>— none —</option>
-              {poles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {poleLenToFtIn(p.length_in)} / {p.weight_lb}lb{" "}
-                  {p.nickname ? `· ${p.nickname}` : ""} ({p.make})
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                className="input flex-1"
+                value={att.poleId}
+                onChange={(e) => setAtt({ ...att, poleId: Number(e.target.value) })}
+              >
+                <option value={0}>— none —</option>
+                {poles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {poleLenToFtIn(p.length_in)} / {p.weight_lb}lb{" "}
+                    {p.nickname ? `· ${p.nickname}` : ""} ({p.make})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setAddPoleOpen(true)}
+                title="Add a new pole to your bag"
+                className="btn-ghost shrink-0 !px-3"
+              >
+                +
+              </button>
+            </div>
           </div>
           <div>
             <div className="label mb-1">
@@ -762,6 +774,15 @@ export default function LogSession() {
         destructive
         onConfirm={deleteAttempt}
         onCancel={() => setPendingDelete(null)}
+      />
+
+      <AddPoleDialog
+        open={addPoleOpen}
+        onClose={() => setAddPoleOpen(false)}
+        onCreated={(newPole) => {
+          setPoles((cur) => [newPole, ...cur]);
+          setAtt((a) => ({ ...a, poleId: newPole.id }));
+        }}
       />
     </div>
   );

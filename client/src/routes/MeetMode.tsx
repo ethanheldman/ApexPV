@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api";
 import { ftInToMm, mmToFtIn, poleLenToFtIn, RESULT_COLOR, RESULT_LABEL, todayLocal } from "../lib/format";
 import { useUnit } from "../lib/unit";
+import AddPoleDialog from "../components/AddPoleDialog";
 import type { Attempt, Pole, Session } from "../types";
 
 // Clean imperial increments — every 6", from 9'0" up to 18'0".
@@ -21,6 +22,7 @@ export default function MeetMode() {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [activeHeight, setActiveHeight] = useState({ ft: 13, in: 0 });
   const [poleId, setPoleId] = useState<number>(0);
+  const [addPoleOpen, setAddPoleOpen] = useState(false);
 
   useEffect(() => {
     api<Pole[]>("/api/poles/mine").then((ps) => {
@@ -133,19 +135,29 @@ export default function MeetMode() {
 
       <div className="card p-4 mb-3">
         <div className="label mb-2">Pole</div>
-        <select
-          className="input"
-          value={poleId}
-          onChange={(e) => setPoleId(Number(e.target.value))}
-        >
-          <option value={0}>— none —</option>
-          {poles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {poleLenToFtIn(p.length_in)} / {p.weight_lb}lb{" "}
-              {p.nickname ? `· ${p.nickname}` : ""}
-            </option>
-          ))}
-        </select>
+        <div className="flex gap-2">
+          <select
+            className="input flex-1"
+            value={poleId}
+            onChange={(e) => setPoleId(Number(e.target.value))}
+          >
+            <option value={0}>— none —</option>
+            {poles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {poleLenToFtIn(p.length_in)} / {p.weight_lb}lb{" "}
+                {p.nickname ? `· ${p.nickname}` : ""}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => setAddPoleOpen(true)}
+            title="Add a new pole"
+            className="btn-ghost shrink-0 !px-3"
+          >
+            +
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-3">
@@ -201,6 +213,15 @@ export default function MeetMode() {
           {topClear ? fmt(topClear) : "—"}
         </div>
       </div>
+
+      <AddPoleDialog
+        open={addPoleOpen}
+        onClose={() => setAddPoleOpen(false)}
+        onCreated={(newPole) => {
+          setPoles((cur) => [newPole, ...cur]);
+          setPoleId(newPole.id);
+        }}
+      />
     </div>
   );
 }

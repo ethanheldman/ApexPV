@@ -15,7 +15,7 @@ type DemoSummary = {
 export default function Login() {
   const { login } = useAuth();
   const [handle, setHandle] = useState("");
-  const [password, setPassword] = useState("apex1234");
+  const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [demo, setDemo] = useState<DemoSummary[] | null>(null);
