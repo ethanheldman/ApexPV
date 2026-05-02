@@ -8,6 +8,7 @@ import Avatar from "../components/Avatar";
 import ConfirmDialog from "../components/ConfirmDialog";
 import VideoDrop from "../components/VideoDrop";
 import AddPoleDialog from "../components/AddPoleDialog";
+import NumberField from "../components/NumberField";
 import { ftInToMm, mmToFtIn, poleLenToFtIn, inchesToFtIn, ftInToInches, todayLocal } from "../lib/format";
 import { useUnit } from "../lib/unit";
 import { MISS_TAG_GROUPS } from "../lib/missTags";
@@ -439,9 +440,7 @@ export default function LogSession() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="label mb-1">feet</div>
-            <input
-              type="number"
-              inputMode="numeric"
+            <NumberField
               className="input text-lg font-semibold"
               value={att.feet}
               onChange={(e) => setAtt({ ...att, feet: Number(e.target.value) })}
@@ -451,9 +450,8 @@ export default function LogSession() {
           </div>
           <div>
             <div className="label mb-1">inches (0-11.5)</div>
-            <input
-              type="number"
-              inputMode="decimal"
+            <NumberField
+              decimal
               step="0.25"
               className="input text-lg font-semibold"
               value={att.inches}
@@ -521,9 +519,7 @@ export default function LogSession() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="relative">
-                <input
-                  type="number"
-                  inputMode="numeric"
+                <NumberField
                   className="input pr-7"
                   min={5}
                   max={16}
@@ -540,9 +536,8 @@ export default function LogSession() {
                 </span>
               </div>
               <div className="relative">
-                <input
-                  type="number"
-                  inputMode="decimal"
+                <NumberField
+                  decimal
                   step="0.5"
                   className="input pr-7"
                   min={0}
@@ -566,9 +561,8 @@ export default function LogSession() {
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <div className="label mb-1">step (in from box)</div>
-            <input
-              type="number"
-              inputMode="decimal"
+            <NumberField
+              decimal
               className="input"
               min={0}
               max={200}
@@ -580,9 +574,7 @@ export default function LogSession() {
           </div>
           <div>
             <div className="label mb-1">run-up steps</div>
-            <input
-              type="number"
-              inputMode="numeric"
+            <NumberField
               className="input"
               min={0}
               max={40}

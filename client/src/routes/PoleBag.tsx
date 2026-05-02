@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Pole } from "../types";
 import ConfirmDialog from "../components/ConfirmDialog";
+import NumberField from "../components/NumberField";
 import { POLE_BRANDS } from "../lib/poleBrands";
 import { poleLenToFtIn, ftInToDecimalFeet } from "../lib/format";
 
@@ -159,10 +160,8 @@ export default function PoleBag() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="relative">
-                <input
+                <NumberField
                   className="input pr-7"
-                  type="number"
-                  inputMode="numeric"
                   min={6}
                   max={18}
                   required
@@ -172,10 +171,8 @@ export default function PoleBag() {
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">ft</span>
               </div>
               <div className="relative">
-                <input
+                <NumberField
                   className="input pr-7"
-                  type="number"
-                  inputMode="numeric"
                   min={0}
                   max={11}
                   step="1"
@@ -189,10 +186,8 @@ export default function PoleBag() {
           </div>
           <div>
             <div className="label mb-1">weight (lb)</div>
-            <input
+            <NumberField
               className="input"
-              type="number"
-              inputMode="numeric"
               min={60}
               max={220}
               required
@@ -202,10 +197,9 @@ export default function PoleBag() {
           </div>
           <div>
             <div className="label mb-1">flex</div>
-            <input
+            <NumberField
+              decimal
               className="input"
-              type="number"
-              inputMode="decimal"
               step="0.1"
               min={5}
               max={30}

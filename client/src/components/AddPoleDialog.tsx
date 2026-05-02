@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api";
 import { POLE_BRANDS } from "../lib/poleBrands";
 import { ftInToDecimalFeet, poleLenToFtIn } from "../lib/format";
+import NumberField from "./NumberField";
 import type { Pole } from "../types";
 
 type Props = {
@@ -150,10 +151,8 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="relative">
-              <input
+              <NumberField
                 className="input pr-7"
-                type="number"
-                inputMode="numeric"
                 min={6}
                 max={18}
                 required
@@ -165,10 +164,8 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
               </span>
             </div>
             <div className="relative">
-              <input
+              <NumberField
                 className="input pr-7"
-                type="number"
-                inputMode="numeric"
                 min={0}
                 max={11}
                 step="1"
@@ -185,10 +182,8 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
 
         <div>
           <div className="label mb-1">weight (lb)</div>
-          <input
+          <NumberField
             className="input"
-            type="number"
-            inputMode="numeric"
             min={60}
             max={220}
             required
@@ -200,10 +195,9 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <div className="label mb-1">flex (opt)</div>
-            <input
+            <NumberField
+              decimal
               className="input"
-              type="number"
-              inputMode="decimal"
               step="0.1"
               min={5}
               max={30}

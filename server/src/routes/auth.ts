@@ -5,7 +5,15 @@ import { db } from "../db.js";
 import type { User } from "../types.js";
 
 const SignupBody = z.object({
-  handle: z.string().min(2).max(24).regex(/^[a-zA-Z0-9_]+$/),
+  // Allow letters/digits + most punctuation; block only whitespace and chars
+  // that break URLs/paths (so /u/<handle> stays unambiguous).
+  handle: z
+    .string()
+    .min(2)
+    .max(24)
+    .regex(/^[^\s/\\?#&%<>"]+$/, {
+      message: "Handle can't contain whitespace or any of: / \\ ? # & % < > \"",
+    }),
   email: z.string().email(),
   password: z.string().min(6),
   display_name: z.string().min(1).max(60),

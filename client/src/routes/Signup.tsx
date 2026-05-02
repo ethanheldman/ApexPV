@@ -78,8 +78,12 @@ export default function Signup() {
               required
               minLength={2}
               maxLength={24}
-              pattern="[A-Za-z0-9_]+"
+              pattern={`[^\\s/\\\\?#&%<>"]+`}
+              title={`Letters, digits, dots, hyphens — anything except whitespace or / \\ ? # & % < > "`}
             />
+            <div className="text-[11px] text-stone-500 mt-1">
+              dots, dashes, underscores, emoji are all fine
+            </div>
           </div>
           <div>
             <div className="label mb-1">email</div>

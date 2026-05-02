@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { api } from "../api";
+import { useEffect, useRef, useState } from "react";
+import { api, getToken } from "../api";
 import { useAuth } from "../auth";
 import Avatar from "../components/Avatar";
+import NumberField from "../components/NumberField";
 import type { User } from "../types";
 
 type StepResult = {
@@ -38,6 +39,77 @@ export default function Settings() {
   const [stepExp, setStepExp] = useState<"beginner" | "intermediate" | "advanced" | "elite">("intermediate");
   const [stepResult, setStepResult] = useState<StepResult | null>(null);
   const [stepErr, setStepErr] = useState<string | null>(null);
+
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoErr, setPhotoErr] = useState<string | null>(null);
+
+  const onPhotoSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoErr(null);
+    if (!file.type.startsWith("image/")) {
+      setPhotoErr("That doesn't look like an image.");
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setPhotoErr("File is over 50MB.");
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const url = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/uploads/image");
+        const tok = getToken();
+        if (tok) xhr.setRequestHeader("Authorization", `Bearer ${tok}`);
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const j = JSON.parse(xhr.responseText);
+              resolve(j.url);
+            } catch {
+              reject(new Error("bad response"));
+            }
+          } else {
+            try {
+              const j = JSON.parse(xhr.responseText);
+              reject(new Error(j.error ?? `HTTP ${xhr.status}`));
+            } catch {
+              reject(new Error(`HTTP ${xhr.status}`));
+            }
+          }
+        };
+        xhr.onerror = () => reject(new Error("network error"));
+        const form = new FormData();
+        form.append("file", file);
+        xhr.send(form);
+      });
+      // Save immediately so the avatar is live without requiring "Save profile".
+      await api<User>("/api/auth/me", {
+        method: "PATCH",
+        json: { avatar_url: url },
+      });
+      setProfile((p) => ({ ...p, avatar_url: url }));
+      await refresh();
+      flash("Profile picture updated.");
+    } catch (e: any) {
+      setPhotoErr(e.message ?? "upload failed");
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const removePhoto = async () => {
+    setProfile((p) => ({ ...p, avatar_url: "" }));
+    await api<User>("/api/auth/me", {
+      method: "PATCH",
+      json: { avatar_url: null },
+    });
+    await refresh();
+    flash("Profile picture removed.");
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -136,21 +208,54 @@ export default function Settings() {
 
       <form onSubmit={saveProfile} className="card p-5 space-y-3">
         <div className="label">Profile</div>
-        <div className="flex items-center gap-3 mb-1">
+        <div className="flex items-start gap-4 mb-1">
           <Avatar
             seed={user.avatar_seed ?? user.handle}
             url={profile.avatar_url || user.avatar_url}
-            size={56}
+            size={72}
           />
-          <div className="flex-1">
-            <div className="label mb-1">profile picture URL</div>
+          <div className="flex-1 space-y-2">
+            <div className="label">profile picture</div>
             <input
-              type="url"
-              className="input"
-              value={profile.avatar_url}
-              onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })}
-              placeholder="https://… (leave blank for the colored initial)"
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onPhotoSelected}
             />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="btn-ghost text-sm !py-2"
+                disabled={uploadingPhoto}
+              >
+                {uploadingPhoto ? "Uploading…" : "📷 Choose photo"}
+              </button>
+              {profile.avatar_url && (
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="text-xs text-rose-700 hover:underline self-center"
+                  disabled={uploadingPhoto}
+                >
+                  remove
+                </button>
+              )}
+            </div>
+            {photoErr && <div className="text-rose-700 text-xs">{photoErr}</div>}
+            <details className="text-xs text-stone-500">
+              <summary className="cursor-pointer hover:text-ink">
+                …or paste a URL
+              </summary>
+              <input
+                type="url"
+                className="input mt-2 text-sm"
+                value={profile.avatar_url}
+                onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })}
+                placeholder="https://…"
+              />
+            </details>
           </div>
         </div>
         <div>
@@ -225,8 +330,7 @@ export default function Settings() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="label mb-1">height (cm) {profile.height_cm && <span className="font-normal text-stone-400">· {heightFtIn}</span>}</div>
-              <input
-                type="number"
+              <NumberField
                 className="input"
                 min={120}
                 max={230}
@@ -241,8 +345,7 @@ export default function Settings() {
             </div>
             <div>
               <div className="label mb-1">weight (lb)</div>
-              <input
-                type="number"
+              <NumberField
                 className="input"
                 min={60}
                 max={400}
