@@ -4,14 +4,11 @@ import { api } from "../api";
 import { ftInToMm, mmToFtIn, poleLenToFtIn, RESULT_COLOR, RESULT_LABEL, todayLocal } from "../lib/format";
 import { useUnit } from "../lib/unit";
 import AddPoleDialog from "../components/AddPoleDialog";
+import NumberField from "../components/NumberField";
 import type { Attempt, Pole, Session } from "../types";
 
-// Clean imperial increments — every 6", from 9'0" up to 18'0".
-const HEIGHTS: { ft: number; in: number }[] = [];
-for (let ft = 9; ft <= 18; ft++) {
-  HEIGHTS.push({ ft, in: 0 });
-  if (ft < 18) HEIGHTS.push({ ft, in: 6 });
-}
+// Quick adjusters offered alongside the typed input — most-used in a meet.
+const QUICK_BUMPS = [-6, -3, -1, +1, +3, +6] as const;
 
 export default function MeetMode() {
   const { id: routeId } = useParams();
@@ -67,11 +64,20 @@ export default function MeetMode() {
     });
     setAttempts((cur) => [...cur, a]);
     if (result === "clear") {
-      const next = HEIGHTS.find(
-        (h) => h.ft * 12 + h.in > activeHeight.ft * 12 + activeHeight.in,
-      );
-      if (next) setActiveHeight(next);
+      // After a clear, bump the bar by 6" (next half-foot up).
+      bumpHeight(6);
     }
+  };
+
+  /** Adjust the active height by N inches, normalizing inches >= 12 into feet. */
+  const bumpHeight = (delta: number) => {
+    setActiveHeight((cur) => {
+      const total = cur.ft * 12 + cur.in + delta;
+      if (total < 0) return cur;
+      const ft = Math.floor(total / 12);
+      const inches = total - ft * 12;
+      return { ft, in: inches };
+    });
   };
 
   const finish = async () => {
@@ -113,23 +119,54 @@ export default function MeetMode() {
           </div>
           <div className="font-mono text-stone-500">{(mmActive / 1000).toFixed(2)}m</div>
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          {HEIGHTS.map((h) => {
-            const mm = ftInToMm(h.ft, h.in);
-            const on = mm === mmActive;
-            return (
-              <button
-                key={`${h.ft}-${h.in}`}
-                onClick={() => setActiveHeight(h)}
-                className={
-                  "py-2 rounded-lg text-xs font-bold " +
-                  (on ? "bg-ink text-cream" : "bg-stone-100 text-stone-700 hover:bg-stone-200")
-                }
-              >
-                {fmt(mm)}
-              </button>
-            );
-          })}
+
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="relative">
+            <NumberField
+              className="input pr-7 text-lg font-semibold"
+              min={0}
+              max={22}
+              value={activeHeight.ft}
+              onChange={(e) =>
+                setActiveHeight({ ...activeHeight, ft: Number(e.target.value) || 0 })
+              }
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
+              ft
+            </span>
+          </div>
+          <div className="relative">
+            <NumberField
+              decimal
+              step="0.25"
+              className="input pr-7 text-lg font-semibold"
+              min={0}
+              max={11.75}
+              value={activeHeight.in}
+              onChange={(e) =>
+                setActiveHeight({
+                  ...activeHeight,
+                  in: Math.min(11.75, Math.max(0, Number(e.target.value) || 0)),
+                })
+              }
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
+              in
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-6 gap-1">
+          {QUICK_BUMPS.map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => bumpHeight(d)}
+              className="py-1.5 rounded-lg text-xs font-bold bg-stone-100 text-stone-700 hover:bg-stone-200"
+            >
+              {d > 0 ? `+${d}"` : `${d}"`}
+            </button>
+          ))}
         </div>
       </div>
 
