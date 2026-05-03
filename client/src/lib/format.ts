@@ -164,7 +164,6 @@ export const RESULT_COLOR: Record<string, string> = {
 export const GENDER_LABEL: Record<string, string> = {
   m: "Men",
   f: "Women",
-  x: "Non-binary",
 };
 
 export const LEVEL_LABEL: Record<string, string> = {

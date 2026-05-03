@@ -5,7 +5,7 @@ export type User = {
   display_name: string;
   bio: string | null;
   school: string | null;
-  gender: "m" | "f" | "x" | null;
+  gender: "m" | "f" | null;
   level: "hs" | "college" | "open" | "masters" | null;
   pr_height_mm: number | null;
   pr_date: string | null;

@@ -52,7 +52,7 @@ export default function Leaderboard() {
 
       <div className="flex flex-wrap gap-1.5 mb-4">
         <FilterChip label="All divisions" active={!gender} onClick={() => setFilter("gender", "")} />
-        {(["m", "f", "x"] as const).map((g) => (
+        {(["m", "f"] as const).map((g) => (
           <FilterChip
             key={g}
             label={GENDER_LABEL[g]}

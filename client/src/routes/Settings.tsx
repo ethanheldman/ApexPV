@@ -297,7 +297,6 @@ export default function Settings() {
               <option value="">— skip —</option>
               <option value="m">Men</option>
               <option value="f">Women</option>
-              <option value="x">Non-binary</option>
             </select>
           </div>
           <div>

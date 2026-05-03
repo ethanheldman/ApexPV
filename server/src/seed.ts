@@ -23,7 +23,7 @@ export async function runSeed() {
     { handle: "kai", name: "Kai Brennan", school: "Oregon", bio: "2x state champ", gender: "m", level: "college", height: 188, weight: 175 },
     { handle: "jules", name: "Jules Park", school: "Stanford", bio: "rebuilding the run-up", gender: "f", level: "college", height: 170, weight: 138 },
     { handle: "ollie", name: "Ollie Tran", school: "Princeton", bio: "masters vaulter / coach", gender: "m", level: "masters", height: 178, weight: 165 },
-    { handle: "sam", name: "Sam Adeyemi", school: "Texas", bio: "first season on the big poles", gender: "x", level: "college", height: 173, weight: 145 },
+    { handle: "sam", name: "Sam Adeyemi", school: "Texas", bio: "first season on the big poles", gender: "m", level: "college", height: 173, weight: 145 },
     { handle: "demo", name: "Demo Athlete", school: "Apex HS", bio: "try out the app here", gender: "f", level: "hs", height: 165, weight: 125 },
   ];
 

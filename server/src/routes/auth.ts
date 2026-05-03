@@ -16,7 +16,7 @@ const SignupBody = z.object({
   password: z.string().min(6),
   display_name: z.string().min(1).max(60),
   school: z.string().max(80).optional(),
-  gender: z.enum(["m", "f", "x"]).optional(),
+  gender: z.enum(["m", "f"]).optional(),
   level: z.enum(["hs", "college", "open", "masters"]).optional(),
   bio: z.string().max(280).optional(),
 });
@@ -82,7 +82,7 @@ export async function authRoutes(app: FastifyInstance) {
     display_name: z.string().min(1).max(60).optional(),
     school: z.string().max(80).nullable().optional(),
     bio: z.string().max(280).nullable().optional(),
-    gender: z.enum(["m", "f", "x"]).nullable().optional(),
+    gender: z.enum(["m", "f"]).nullable().optional(),
     level: z.enum(["hs", "college", "open", "masters"]).nullable().optional(),
     email: z.string().email().optional(),
     avatar_url: z.string().url().max(500).nullable().optional(),
