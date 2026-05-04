@@ -16,6 +16,7 @@ import Notifications from "./routes/Notifications";
 import Settings from "./routes/Settings";
 import MeetDetail from "./routes/MeetDetail";
 import PoleDetail from "./routes/PoleDetail";
+import DevComponents from "./routes/_DevComponents";
 import { useAuth } from "./auth";
 
 function Private({ children }: { children: JSX.Element }) {
@@ -50,6 +51,8 @@ export default function App() {
           <Route path="/meet/:id" element={<Private><MeetMode /></Private>} />
           <Route path="/notifications" element={<Private><Notifications /></Private>} />
           <Route path="/settings" element={<Private><Settings /></Private>} />
+          {/* Visual QA route for the redesign primitives. */}
+          <Route path="/_dev/components" element={<DevComponents />} />
           <Route path="*" element={<NotFound subject="page" detail="The link you followed may be broken or the page may have been removed." />} />
         </Routes>
       </main>
