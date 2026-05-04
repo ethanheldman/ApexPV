@@ -35,6 +35,7 @@ export default function LogSession() {
   const [savedNote, setSavedNote] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Attempt | null>(null);
   const [meetMatches, setMeetMatches] = useState<Meet[]>([]);
+  const [meetMenuOpen, setMeetMenuOpen] = useState(false);
   const [addPoleOpen, setAddPoleOpen] = useState(false);
 
   const [meta, setMeta] = useState({
@@ -91,19 +92,31 @@ export default function LogSession() {
       });
   }, [routeId]);
 
-  // Meet name → suggestions
+  // Meet picker — load recent meets when the dropdown opens, refresh as the
+  // user types. Empty query returns the most recent meets so users can pick
+  // a meet someone else created without having to remember the exact name.
   useEffect(() => {
-    if (meta.type !== "meet" || !meta.meetName.trim()) {
-      setMeetMatches([]);
-      return;
-    }
+    if (meta.type !== "meet" || !meetMenuOpen) return;
     const t = setTimeout(() => {
-      api<Meet[]>(`/api/meets/search?q=${encodeURIComponent(meta.meetName)}`)
+      api<Meet[]>(
+        `/api/meets/search${meta.meetName ? `?q=${encodeURIComponent(meta.meetName)}` : ""}`,
+      )
         .then(setMeetMatches)
         .catch(() => setMeetMatches([]));
-    }, 200);
+    }, 150);
     return () => clearTimeout(t);
-  }, [meta.meetName, meta.type]);
+  }, [meta.meetName, meta.type, meetMenuOpen]);
+
+  // Click outside the meet picker to close it.
+  useEffect(() => {
+    if (!meetMenuOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest?.("[data-meet-picker]")) setMeetMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [meetMenuOpen]);
 
   const heightMm = useMemo(() => ftInToMm(att.feet, att.inches), [att.feet, att.inches]);
 
@@ -305,42 +318,88 @@ export default function LogSession() {
           </div>
 
           {meta.type === "meet" && (
-            <div className="relative">
-              <div className="label mb-1">meet name</div>
-              <input
-                className="input"
-                value={meta.meetName}
-                onChange={(e) => setMeta({ ...meta, meetName: e.target.value, meetId: null })}
-                placeholder="NESCAC Indoor Champs, Pac-12, Spring Opener…"
-              />
-              {meetMatches.length > 0 && meta.meetName && !meta.meetId && (
-                <div className="absolute left-0 right-0 mt-1 card shadow-md z-20">
-                  {meetMatches.map((m) => (
+            <div className="relative" data-meet-picker>
+              <div className="label mb-1">meet</div>
+              <div className="relative">
+                <input
+                  className="input pr-9"
+                  value={meta.meetName}
+                  onFocus={() => setMeetMenuOpen(true)}
+                  onChange={(e) =>
+                    setMeta({ ...meta, meetName: e.target.value, meetId: null })
+                  }
+                  placeholder="Pick an existing meet or type a new one"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMeetMenuOpen((v) => !v)}
+                  className="absolute right-0 top-0 h-full px-3 text-stone-400 hover:text-ink"
+                  tabIndex={-1}
+                  aria-label="Browse meets"
+                >
+                  ▾
+                </button>
+              </div>
+
+              {meetMenuOpen && (
+                <div className="absolute left-0 right-0 mt-1 card shadow-md z-20 max-h-72 overflow-y-auto">
+                  {meta.meetName.trim() && !meta.meetId && (
                     <button
-                      key={m.id}
                       type="button"
-                      onClick={() =>
-                        setMeta({
-                          ...meta,
-                          meetName: m.name,
-                          meetId: m.id,
-                          date: m.date,
-                          location: m.location ?? meta.location,
-                        })
-                      }
-                      className="block w-full text-left px-3 py-2 hover:bg-stone-50 text-sm"
+                      onClick={() => setMeetMenuOpen(false)}
+                      className="block w-full text-left px-3 py-2 hover:bg-stone-50 text-sm border-b border-stone-100"
                     >
-                      <div className="font-semibold">{m.name}</div>
-                      <div className="text-xs text-stone-500">
-                        {m.date}
-                        {m.location && ` · ${m.location}`}
-                      </div>
+                      <span className="text-stone-500">+ create new meet </span>
+                      <span className="font-semibold">"{meta.meetName.trim()}"</span>
                     </button>
-                  ))}
+                  )}
+
+                  {meetMatches.length === 0 ? (
+                    <div className="px-3 py-4 text-stone-400 text-sm text-center">
+                      {meta.meetName
+                        ? "No meets match — keep typing to create a new one."
+                        : "No meets created yet. Type a name to start one."}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="label px-3 pt-2 pb-1">
+                        {meta.meetName.trim() ? "Existing meets" : "Recent meets"}
+                      </div>
+                      {meetMatches.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => {
+                            setMeta({
+                              ...meta,
+                              meetName: m.name,
+                              meetId: m.id,
+                              date: m.date,
+                              location: m.location ?? meta.location,
+                            });
+                            setMeetMenuOpen(false);
+                          }}
+                          className={
+                            "block w-full text-left px-3 py-2 hover:bg-stone-50 text-sm " +
+                            (meta.meetId === m.id ? "bg-stone-50" : "")
+                          }
+                        >
+                          <div className="font-semibold">{m.name}</div>
+                          <div className="text-xs text-stone-500">
+                            {m.date}
+                            {m.location && ` · ${m.location}`}
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
+
               <p className="text-[11px] text-stone-500 mt-1">
-                Tag a meet to share results with everyone else who was there.
+                {meta.meetId
+                  ? "Joining an existing meet — your session will show up on the meet page."
+                  : "Pick an existing meet to share results with everyone else who was there, or type a new name."}
               </p>
             </div>
           )}
