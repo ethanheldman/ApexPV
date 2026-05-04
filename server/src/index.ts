@@ -85,8 +85,25 @@ if (serveClient) {
 app.decorate("auth", async (req: any, reply: any) => {
   try {
     await req.jwtVerify();
-  } catch {
-    reply.code(401).send({ error: "unauthorized" });
+  } catch (e: any) {
+    // Log the kind of failure (without leaking the token) so we can debug
+    // weirdness like "Invalid Compact JWS" from the deploy log.
+    const auth: string = req.headers.authorization ?? "";
+    req.log.warn(
+      {
+        url: req.url,
+        method: req.method,
+        reason: e.message ?? String(e),
+        code: e.code,
+        auth_prefix: auth.slice(0, 7),
+        auth_len: auth.length,
+        token_segments: auth.startsWith("Bearer ")
+          ? auth.slice(7).split(".").length
+          : 0,
+      },
+      "[apex] auth failed",
+    );
+    return reply.code(401).send({ error: "unauthorized", reason: e.message });
   }
 });
 
