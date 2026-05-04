@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import type { Pole } from "../types";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -234,27 +235,31 @@ export default function PoleBag() {
         <div className="grid sm:grid-cols-2 gap-3">
           {poles.map((p) => (
             <div key={p.id} className={"card p-4 " + (p.retired ? "opacity-60" : "")}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="font-display font-bold text-2xl">
-                    {poleLenToFtIn(p.length_in)} / {p.weight_lb}lb
+              <Link to={`/poles/${p.id}`} className="block -m-1 p-1 rounded-lg hover:bg-stone-50">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-display font-bold text-2xl">
+                      {poleLenToFtIn(p.length_in)} / {p.weight_lb}lb
+                    </div>
+                    <div className="text-sm text-stone-500">{p.make}</div>
+                    {p.nickname && (
+                      <div className="text-xs text-stone-400 italic mt-0.5">"{p.nickname}"</div>
+                    )}
                   </div>
-                  <div className="text-sm text-stone-500">{p.make}</div>
-                  {p.nickname && (
-                    <div className="text-xs text-stone-400 italic mt-0.5">"{p.nickname}"</div>
+                  {p.retired ? (
+                    <span className="pill bg-stone-200 text-stone-600">retired</span>
+                  ) : (
+                    <span className="pill bg-emerald-100 text-emerald-800">active</span>
                   )}
                 </div>
-                {p.retired ? (
-                  <span className="pill bg-stone-200 text-stone-600">retired</span>
-                ) : (
-                  <span className="pill bg-emerald-100 text-emerald-800">active</span>
-                )}
-              </div>
-              <div className="flex gap-3 mt-3 text-xs text-stone-500">
-                {p.flex != null && <span>flex {p.flex}</span>}
-                <span>{p.attempts_count} attempts</span>
-              </div>
-              <div className="flex gap-2 mt-3">
+                <div className="flex gap-3 mt-3 text-xs text-stone-500">
+                  {p.flex != null && <span>flex {p.flex}</span>}
+                  <span>
+                    {p.attempts_count} attempt{p.attempts_count === 1 ? "" : "s"} →
+                  </span>
+                </div>
+              </Link>
+              <div className="flex gap-2 mt-3 pt-3 border-t border-stone-100">
                 <button onClick={() => toggleRetired(p)} className="btn-ghost text-xs !py-1 !px-2">
                   {p.retired ? "Reactivate" : "Retire"}
                 </button>

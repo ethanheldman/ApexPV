@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import Avatar from "../components/Avatar";
@@ -358,7 +358,11 @@ export default function Profile() {
             </div>
           ) : (
             poles.map((p) => (
-              <div key={p.id} className={"card p-4 " + (p.retired ? "opacity-60" : "")}>
+              <Link
+                key={p.id}
+                to={`/poles/${p.id}`}
+                className={"card p-4 hover:shadow-sm transition-shadow " + (p.retired ? "opacity-60" : "")}
+              >
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="font-display font-bold text-xl">
@@ -377,9 +381,9 @@ export default function Profile() {
                 </div>
                 <div className="flex gap-3 mt-3 text-xs text-stone-500">
                   {p.flex != null && <span>flex {p.flex}</span>}
-                  <span>{p.attempts_count} attempts</span>
+                  <span>{p.attempts_count} attempts →</span>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>

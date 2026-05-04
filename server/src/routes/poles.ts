@@ -53,6 +53,67 @@ export async function poleRoutes(app: FastifyInstance) {
     return qOne<Pole>("SELECT * FROM poles WHERE id = ?", [id]);
   });
 
+  // Pole detail — basic info + aggregate stats for anyone, full attempt list
+  // for the pole's owner only (it's their training journal).
+  app.get<{ Params: { id: string } }>("/:id", async (req: any, reply) => {
+    const id = Number(req.params.id);
+    const pole = await qOne<Pole>(
+      "SELECT * FROM poles WHERE id = ? AND deleted_at IS NULL",
+      [id],
+    );
+    if (!pole) return reply.code(404).send({ error: "not found" });
+
+    let viewerId: number | null = null;
+    try {
+      await req.jwtVerify();
+      viewerId = req.user.id;
+    } catch {}
+    const isOwner = pole.user_id === viewerId;
+
+    const stats = await qOne<{
+      total_attempts: number;
+      clears: number;
+      knocks: number;
+      passes: number;
+      best_clearance_mm: number | null;
+    }>(
+      `SELECT
+         COUNT(*)::int AS total_attempts,
+         COUNT(*) FILTER (WHERE result = 'clear')::int AS clears,
+         COUNT(*) FILTER (WHERE result = 'knock')::int AS knocks,
+         COUNT(*) FILTER (WHERE result = 'pass')::int AS passes,
+         MAX(CASE WHEN result = 'clear' THEN bar_height_mm END)::int AS best_clearance_mm
+       FROM attempts WHERE pole_id = ?`,
+      [id],
+    );
+
+    const owner = await qOne(
+      "SELECT handle, display_name, avatar_seed, avatar_url FROM users WHERE id = ?",
+      [pole.user_id],
+    );
+
+    let attempts: any[] = [];
+    if (isOwner) {
+      attempts = await qAll(
+        `SELECT a.*, s.date AS session_date, s.type AS session_type, s.location AS session_location,
+                s.id AS session_id
+         FROM attempts a
+         JOIN sessions s ON s.id = a.session_id
+         WHERE a.pole_id = ?
+         ORDER BY a.id DESC LIMIT 200`,
+        [id],
+      );
+    }
+
+    return {
+      ...pole,
+      is_owner: isOwner,
+      owner,
+      stats,
+      attempts,
+    };
+  });
+
   app.patch<{ Params: { id: string } }>(
     "/:id",
     { preHandler: (app as any).auth },

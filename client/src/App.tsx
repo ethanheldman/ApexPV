@@ -15,6 +15,7 @@ import MeetMode from "./routes/MeetMode";
 import Notifications from "./routes/Notifications";
 import Settings from "./routes/Settings";
 import MeetDetail from "./routes/MeetDetail";
+import PoleDetail from "./routes/PoleDetail";
 import { useAuth } from "./auth";
 
 function Private({ children }: { children: JSX.Element }) {
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/log" element={<Private><LogSession /></Private>} />
           <Route path="/log/:id" element={<LogSession />} />
           <Route path="/poles" element={<Private><PoleBag /></Private>} />
+          <Route path="/poles/:id" element={<PoleDetail />} />
           <Route path="/meet" element={<Private><MeetMode /></Private>} />
           <Route path="/meet/:id" element={<Private><MeetMode /></Private>} />
           <Route path="/notifications" element={<Private><Notifications /></Private>} />
