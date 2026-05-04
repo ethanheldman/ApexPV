@@ -52,7 +52,7 @@ export default function Discover() {
               onClick={() => setFilter("gender", g)}
             />
           ))}
-          <span className="w-px h-6 bg-stone-200 mx-1.5 self-center" />
+          <span className="w-px h-6 bg-bg-raised mx-1.5 self-center" />
           <FilterChip label="All levels" active={!level} onClick={() => setFilter("level", "")} />
           {(["hs", "college", "open", "masters"] as const).map((l) => (
             <FilterChip
@@ -65,9 +65,9 @@ export default function Discover() {
         </div>
 
         {posts === null ? (
-          <div className="text-stone-400">loading…</div>
+          <div className="text-text-tertiary">loading…</div>
         ) : posts.length === 0 ? (
-          <div className="card p-6 text-stone-500">No public posts match those filters.</div>
+          <div className="card p-6 text-text-secondary">No public posts match those filters.</div>
         ) : (
           <div className="space-y-4">
             {posts.map((p) => (
@@ -85,18 +85,18 @@ export default function Discover() {
               <Link
                 key={u.id}
                 to={`/u/${u.handle}`}
-                className="flex items-center gap-3 hover:bg-stone-50 rounded-lg p-1.5 -m-1.5"
+                className="flex items-center gap-3 hover:bg-bg-raised/30 rounded-lg p-1.5 -m-1.5"
               >
                 <Avatar seed={u.avatar_seed ?? u.handle} url={u.avatar_url} size={36} />
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-sm truncate">{u.display_name}</div>
-                  <div className="text-[11px] text-stone-500 truncate">
+                  <div className="text-[11px] text-text-secondary truncate">
                     @{u.handle}
                     {u.school && ` · ${u.school}`}
                   </div>
                 </div>
                 {u.pr_height_mm && (
-                  <div className="font-mono text-xs text-stone-700">
+                  <div className="font-mono text-xs text-text-primary">
                     {fmt(u.pr_height_mm)}
                   </div>
                 )}
@@ -123,7 +123,7 @@ function FilterChip({
       onClick={onClick}
       className={
         "px-2.5 py-1 rounded-full text-[12px] font-semibold transition-colors " +
-        (active ? "bg-ink text-cream" : "bg-stone-100 text-stone-700 hover:bg-stone-200")
+        (active ? "bg-bg-sunken text-text-primary" : "bg-bg-raised text-text-primary hover:bg-bg-raised")
       }
     >
       {label}

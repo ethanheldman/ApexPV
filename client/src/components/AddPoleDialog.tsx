@@ -84,7 +84,7 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 grid items-end sm:items-center justify-items-stretch sm:justify-items-center bg-ink/30 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid items-end sm:items-center justify-items-stretch sm:justify-items-center bg-bg-sunken/30 backdrop-blur-sm"
       onClick={close}
     >
       <form
@@ -100,7 +100,7 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
           <button
             type="button"
             onClick={close}
-            className="text-stone-400 hover:text-ink text-2xl leading-none"
+            className="text-text-tertiary hover:text-text-primary text-2xl leading-none"
             aria-label="Close"
           >
             ×
@@ -145,7 +145,7 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
         <div>
           <div className="label mb-1">
             length{" "}
-            <span className="font-normal text-stone-400">
+            <span className="font-normal text-text-tertiary">
               · {poleLenToFtIn(lengthDecimal)}
             </span>
           </div>
@@ -159,7 +159,7 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
                 value={form.length_ft}
                 onChange={(e) => setForm({ ...form, length_ft: Number(e.target.value) })}
               />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">
                 ft
               </span>
             </div>
@@ -173,7 +173,7 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
                 value={form.length_inches}
                 onChange={(e) => setForm({ ...form, length_inches: Number(e.target.value) })}
               />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">
                 in
               </span>
             </div>

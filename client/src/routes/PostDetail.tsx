@@ -122,7 +122,7 @@ export default function PostDetail() {
         detail="That post is private or for followers only."
       />
     );
-  if (!post) return <div className="px-5 pt-6 text-stone-400">loading…</div>;
+  if (!post) return <div className="px-5 pt-6 text-text-tertiary">loading…</div>;
 
   const isOwner = user?.id === post.user_id;
   const isFirst = post.is_first_clearance === 1;
@@ -149,11 +149,11 @@ export default function PostDetail() {
               <Link to={`/u/${post.author.handle}`} className="font-semibold hover:underline">
                 {post.author.display_name}
               </Link>
-              <span className="text-stone-500 text-sm">@{post.author.handle}</span>
+              <span className="text-text-secondary text-sm">@{post.author.handle}</span>
               {post.author.school && (
-                <span className="text-stone-400 text-sm">· {post.author.school}</span>
+                <span className="text-text-tertiary text-sm">· {post.author.school}</span>
               )}
-              <span className="text-stone-400 text-xs ml-auto">{relTime(post.created_at)}</span>
+              <span className="text-text-tertiary text-xs ml-auto">{relTime(post.created_at)}</span>
             </div>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               {isFirst && top && (
@@ -165,7 +165,7 @@ export default function PostDetail() {
                 <span className="pill bg-emerald-500 text-white">PR</span>
               )}
               {post.visibility !== "public" && (
-                <span className="pill bg-stone-200 text-stone-700">{post.visibility}</span>
+                <span className="pill bg-bg-raised text-text-primary">{post.visibility}</span>
               )}
             </div>
           </div>
@@ -173,7 +173,7 @@ export default function PostDetail() {
             <div className="flex gap-1">
               <button
                 onClick={() => setEditingPost(true)}
-                className="text-xs text-stone-500 hover:text-ink px-2 py-1 rounded hover:bg-stone-100"
+                className="text-xs text-text-secondary hover:text-text-primary px-2 py-1 rounded hover:bg-bg-raised"
               >
                 Edit
               </button>
@@ -205,8 +205,8 @@ export default function PostDetail() {
                   className={
                     "px-2.5 py-1 rounded-full text-[12px] font-semibold capitalize " +
                     (editVisibility === v
-                      ? "bg-ink text-cream"
-                      : "bg-stone-100 text-stone-700 hover:bg-stone-200")
+                      ? "bg-bg-sunken text-text-primary"
+                      : "bg-bg-raised text-text-primary hover:bg-bg-raised")
                   }
                 >
                   {v}
@@ -238,7 +238,7 @@ export default function PostDetail() {
           .map((a) => (
             <div
               key={`v-${a.id}`}
-              className="mt-3 rounded-xl overflow-hidden bg-stone-900"
+              className="mt-3 rounded-xl overflow-hidden bg-bg-sunken"
             >
               <video
                 src={a.video_url ?? undefined}
@@ -249,20 +249,20 @@ export default function PostDetail() {
             </div>
           ))}
 
-        <section className="mt-4 rounded-xl border border-stone-200 bg-stone-50/60 p-2">
+        <section className="mt-4 rounded-xl border border-border-subtle bg-bg-raised/30/60 p-2">
           <div className="px-2 pt-1 pb-2 flex items-baseline justify-between">
             <div className="label">Attempts in this session</div>
             {post.session_id && (
               <Link
                 to={`/log/${post.session_id}`}
-                className="text-xs text-stone-500 hover:underline"
+                className="text-xs text-text-secondary hover:underline"
               >
                 Open session →
               </Link>
             )}
           </div>
           {post.attempts.length === 0 ? (
-            <div className="text-stone-400 text-sm py-4 text-center">No attempts pinned.</div>
+            <div className="text-text-tertiary text-sm py-4 text-center">No attempts pinned.</div>
           ) : (
             post.attempts.map((a, i) => (
               <AttemptRow
@@ -275,18 +275,18 @@ export default function PostDetail() {
           )}
         </section>
 
-        <footer className="mt-4 flex items-center gap-2 border-t border-stone-100 pt-3">
+        <footer className="mt-4 flex items-center gap-2 border-t border-border-subtle pt-3">
           <button
             onClick={toggleKudos}
             disabled={!user || isOwner}
             title={isOwner ? "You can't Up & Over your own session" : ""}
             className={
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed " +
-              (post.my_kudos ? "bg-accent/15 text-accent" : "text-stone-700 hover:bg-stone-100")
+              (post.my_kudos ? "bg-accent/15 text-accent" : "text-text-primary hover:bg-bg-raised")
             }
           >
             ↑ Up & Over
-            <span className="text-stone-500 font-normal">{post.kudos_count}</span>
+            <span className="text-text-secondary font-normal">{post.kudos_count}</span>
           </button>
         </footer>
       </article>
@@ -295,7 +295,7 @@ export default function PostDetail() {
         <div className="label mb-2">Comments</div>
         <div className="space-y-2 mb-3">
           {comments.length === 0 && (
-            <div className="text-stone-400 text-sm">Be the first to say something.</div>
+            <div className="text-text-tertiary text-sm">Be the first to say something.</div>
           )}
           {comments.map((c) => (
             <div key={c.id} className="card p-3 flex gap-3">
@@ -305,9 +305,9 @@ export default function PostDetail() {
                   <Link to={`/u/${c.handle}`} className="font-semibold text-sm hover:underline">
                     {c.display_name}
                   </Link>
-                  <span className="text-stone-400 text-xs">{relTime(c.created_at)}</span>
+                  <span className="text-text-tertiary text-xs">{relTime(c.created_at)}</span>
                   {c.updated_at && (
-                    <span className="text-stone-400 text-xs italic">(edited)</span>
+                    <span className="text-text-tertiary text-xs italic">(edited)</span>
                   )}
                   {user?.id === c.user_id && editingCommentId !== c.id && (
                     <span className="ml-auto flex gap-1">
@@ -316,7 +316,7 @@ export default function PostDetail() {
                           setEditingCommentId(c.id);
                           setEditCommentBody(c.body);
                         }}
-                        className="text-xs text-stone-500 hover:text-ink"
+                        className="text-xs text-text-secondary hover:text-text-primary"
                       >
                         Edit
                       </button>
@@ -374,7 +374,7 @@ export default function PostDetail() {
             </button>
           </form>
         ) : (
-          <div className="text-stone-500 text-sm">
+          <div className="text-text-secondary text-sm">
             <Link to="/login" className="font-semibold underline">
               Sign in
             </Link>{" "}

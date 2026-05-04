@@ -74,7 +74,7 @@ export default function PoleDetail() {
   }, [data]);
 
   if (notFound) return <NotFound subject="pole" />;
-  if (!data) return <div className="px-5 pt-6 text-stone-400">loading…</div>;
+  if (!data) return <div className="px-5 pt-6 text-text-tertiary">loading…</div>;
 
   const clearRate =
     data.stats.total_attempts > 0
@@ -97,12 +97,12 @@ export default function PoleDetail() {
             <h1 className="font-display font-extrabold text-3xl tracking-tight mt-1">
               {poleLenToFtIn(data.length_in)} / {data.weight_lb}lb
             </h1>
-            <div className="text-stone-600 text-sm">
+            <div className="text-text-secondary text-sm">
               {data.make}
               {data.flex != null && ` · flex ${data.flex}`}
             </div>
             {data.nickname && (
-              <div className="text-stone-500 text-sm italic mt-1">"{data.nickname}"</div>
+              <div className="text-text-secondary text-sm italic mt-1">"{data.nickname}"</div>
             )}
           </div>
           <Link to={data.is_owner ? "/poles" : `/u/${data.owner.handle}`}>
@@ -133,7 +133,7 @@ export default function PoleDetail() {
       {/* Attempt list — owner only */}
       {data.is_owner ? (
         grouped.length === 0 ? (
-          <div className="card p-6 text-center text-stone-500">
+          <div className="card p-6 text-center text-text-secondary">
             No attempts logged on this pole yet. Pick it on your next session.
           </div>
         ) : (
@@ -143,17 +143,17 @@ export default function PoleDetail() {
               <div key={g.sessionId} className="card p-2">
                 <Link
                   to={`/log/${g.sessionId}`}
-                  className="flex items-baseline justify-between px-2 pt-2 pb-1 hover:bg-stone-50 rounded-lg"
+                  className="flex items-baseline justify-between px-2 pt-2 pb-1 hover:bg-bg-raised/30 rounded-lg"
                 >
                   <div>
                     <div className="font-display font-bold text-sm capitalize">
                       {g.type} · {fmtDate(g.date)}
                     </div>
                     {g.location && (
-                      <div className="text-[11px] text-stone-500">{g.location}</div>
+                      <div className="text-[11px] text-text-secondary">{g.location}</div>
                     )}
                   </div>
-                  <div className="text-[11px] text-stone-400">
+                  <div className="text-[11px] text-text-tertiary">
                     {g.attempts.length} attempt{g.attempts.length === 1 ? "" : "s"}
                   </div>
                 </Link>
@@ -169,10 +169,10 @@ export default function PoleDetail() {
           </div>
         )
       ) : (
-        <div className="card p-5 text-sm text-stone-500">
+        <div className="card p-5 text-sm text-text-secondary">
           {me ? `Only @${data.owner.handle} can see attempts on this pole.` : (
             <>
-              <Link to="/login" className="font-semibold text-ink underline">
+              <Link to="/login" className="font-semibold text-text-primary underline">
                 Sign in
               </Link>{" "}
               to see your own pole stats. Other people's attempt lists are private.
@@ -184,7 +184,7 @@ export default function PoleDetail() {
       <div className="text-center mt-6">
         <Link
           to={data.is_owner ? "/poles" : `/u/${data.owner.handle}`}
-          className="text-xs text-stone-500 hover:text-ink hover:underline"
+          className="text-xs text-text-secondary hover:text-text-primary hover:underline"
         >
           ← {data.is_owner ? "back to your pole bag" : `back to @${data.owner.handle}`}
         </Link>
@@ -198,7 +198,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
     <div>
       <div className="label">{label}</div>
       <div className="font-display font-bold text-2xl tracking-tight">{value}</div>
-      {sub && <div className="text-[11px] text-stone-400">{sub}</div>}
+      {sub && <div className="text-[11px] text-text-tertiary">{sub}</div>}
     </div>
   );
 }

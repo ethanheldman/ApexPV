@@ -18,11 +18,11 @@ export default {
         "text-secondary": "#A1A6B0",
         "text-tertiary": "#6B7280",
         "text-disabled": "#3F4651",
-        // Single accent — electric lime. Used sparingly: PRs, primary CTA,
+        // Single accent — electric cyan. Used sparingly: PRs, primary CTA,
         // active nav, focus rings, chart strokes.
-        accent: "#D4FF3F",
-        "accent-hover": "#E4FF6A",
-        "accent-pressed": "#B8E028",
+        accent: "#22D3EE",
+        "accent-hover": "#67E8F9",
+        "accent-pressed": "#0891B2",
         "accent-ink": "#0A0B0D",
         // States — rare, never a primary surface color.
         success: "#4ADE80",
@@ -30,11 +30,8 @@ export default {
         danger: "#F87171",
         info: "#60A5FA",
 
-        // ── Legacy tokens (kept until each screen is migrated to the
-        //    new system per §5; remove afterwards). ─────────────────────────
-        ink: "#0c0a09",
-        cream: "#f7f5f0",
-        bar: "#0f1115",
+        // (Legacy ink/cream/bar tokens removed — all references migrated to
+        // the new bg-base / text-primary / bg-sunken system above.)
       },
       fontFamily: {
         // Display numerals — tabular figures for heights, grips, PRs.

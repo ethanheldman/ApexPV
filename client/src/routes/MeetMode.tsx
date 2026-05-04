@@ -107,7 +107,7 @@ export default function MeetMode() {
           Finish & post
         </button>
       </div>
-      <div className="text-xs text-stone-500 mb-4">
+      <div className="text-xs text-text-secondary mb-4">
         Three-tap logging. Notes & details after.
       </div>
 
@@ -117,7 +117,7 @@ export default function MeetMode() {
           <div className="font-display font-extrabold text-5xl tracking-tight">
             {fmt(mmActive)}
           </div>
-          <div className="font-mono text-stone-500">{(mmActive / 1000).toFixed(2)}m</div>
+          <div className="font-mono text-text-secondary">{(mmActive / 1000).toFixed(2)}m</div>
         </div>
 
         <div className="grid grid-cols-2 gap-2 mb-3">
@@ -131,7 +131,7 @@ export default function MeetMode() {
                 setActiveHeight({ ...activeHeight, ft: Number(e.target.value) || 0 })
               }
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">
               ft
             </span>
           </div>
@@ -150,7 +150,7 @@ export default function MeetMode() {
                 })
               }
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">
               in
             </span>
           </div>
@@ -162,7 +162,7 @@ export default function MeetMode() {
               key={d}
               type="button"
               onClick={() => bumpHeight(d)}
-              className="py-1.5 rounded-lg text-xs font-bold bg-stone-100 text-stone-700 hover:bg-stone-200"
+              className="py-1.5 rounded-lg text-xs font-bold bg-bg-raised text-text-primary hover:bg-bg-raised"
             >
               {d > 0 ? `+${d}"` : `${d}"`}
             </button>
@@ -221,7 +221,7 @@ export default function MeetMode() {
       <div className="card p-3 mb-3">
         <div className="flex justify-between items-center mb-2">
           <div className="label">At {fmt(mmActive)}</div>
-          <div className="text-xs text-stone-500">{atHeight.length} attempt(s)</div>
+          <div className="text-xs text-text-secondary">{atHeight.length} attempt(s)</div>
         </div>
         <div className="flex gap-1.5">
           {[1, 2, 3].map((n) => {
@@ -231,7 +231,7 @@ export default function MeetMode() {
                 key={n}
                 className={
                   "flex-1 rounded-lg py-2.5 text-center text-xs font-bold " +
-                  (a ? RESULT_COLOR[a.result] : "bg-stone-50 text-stone-300")
+                  (a ? RESULT_COLOR[a.result] : "bg-bg-raised/30 text-text-disabled")
                 }
               >
                 {a ? RESULT_LABEL[a.result].split(" ")[0] : `${n}`}
@@ -244,7 +244,7 @@ export default function MeetMode() {
       <div className="card p-4">
         <div className="flex justify-between mb-1">
           <div className="label">Top clearance</div>
-          <div className="text-xs text-stone-500">{cleared.length} clears</div>
+          <div className="text-xs text-text-secondary">{cleared.length} clears</div>
         </div>
         <div className="font-display font-extrabold text-3xl tracking-tight">
           {topClear ? fmt(topClear) : "—"}

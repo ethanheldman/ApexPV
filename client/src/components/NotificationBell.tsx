@@ -26,7 +26,7 @@ export default function NotificationBell() {
   return (
     <Link
       to="/notifications"
-      className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-stone-100 text-stone-700"
+      className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-bg-raised text-text-primary"
       aria-label="Notifications"
     >
       <span className="text-lg">🔔</span>

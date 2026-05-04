@@ -109,7 +109,7 @@ export default function PoleBag() {
       <div className="flex items-end justify-between mb-5">
         <div>
           <h1 className="font-display font-extrabold text-3xl tracking-tight">Pole bag</h1>
-          <p className="text-stone-500 text-sm">Track lifetime use across every pole.</p>
+          <p className="text-text-secondary text-sm">Track lifetime use across every pole.</p>
         </div>
         <button onClick={() => setAdding((a) => !a)} className="btn-primary">
           {adding ? "Cancel" : "+ Add pole"}
@@ -155,7 +155,7 @@ export default function PoleBag() {
           <div className="sm:col-span-2">
             <div className="label mb-1">
               length{" "}
-              <span className="font-normal text-stone-400">
+              <span className="font-normal text-text-tertiary">
                 · {poleLenToFtIn(lengthDecimal)}
               </span>
             </div>
@@ -169,7 +169,7 @@ export default function PoleBag() {
                   value={form.length_ft}
                   onChange={(e) => setForm({ ...form, length_ft: Number(e.target.value) })}
                 />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">ft</span>
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">ft</span>
               </div>
               <div className="relative">
                 <NumberField
@@ -181,7 +181,7 @@ export default function PoleBag() {
                   value={form.length_inches}
                   onChange={(e) => setForm({ ...form, length_inches: Number(e.target.value) })}
                 />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">in</span>
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">in</span>
               </div>
             </div>
           </div>
@@ -228,38 +228,38 @@ export default function PoleBag() {
       )}
 
       {poles.length === 0 ? (
-        <div className="card p-6 text-center text-stone-500">
+        <div className="card p-6 text-center text-text-secondary">
           No poles yet. Add one above to start tracking.
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 gap-3">
           {poles.map((p) => (
             <div key={p.id} className={"card p-4 " + (p.retired ? "opacity-60" : "")}>
-              <Link to={`/poles/${p.id}`} className="block -m-1 p-1 rounded-lg hover:bg-stone-50">
+              <Link to={`/poles/${p.id}`} className="block -m-1 p-1 rounded-lg hover:bg-bg-raised/30">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="font-display font-bold text-2xl">
                       {poleLenToFtIn(p.length_in)} / {p.weight_lb}lb
                     </div>
-                    <div className="text-sm text-stone-500">{p.make}</div>
+                    <div className="text-sm text-text-secondary">{p.make}</div>
                     {p.nickname && (
-                      <div className="text-xs text-stone-400 italic mt-0.5">"{p.nickname}"</div>
+                      <div className="text-xs text-text-tertiary italic mt-0.5">"{p.nickname}"</div>
                     )}
                   </div>
                   {p.retired ? (
-                    <span className="pill bg-stone-200 text-stone-600">retired</span>
+                    <span className="pill bg-bg-raised text-text-secondary">retired</span>
                   ) : (
                     <span className="pill bg-emerald-100 text-emerald-800">active</span>
                   )}
                 </div>
-                <div className="flex gap-3 mt-3 text-xs text-stone-500">
+                <div className="flex gap-3 mt-3 text-xs text-text-secondary">
                   {p.flex != null && <span>flex {p.flex}</span>}
                   <span>
                     {p.attempts_count} attempt{p.attempts_count === 1 ? "" : "s"} →
                   </span>
                 </div>
               </Link>
-              <div className="flex gap-2 mt-3 pt-3 border-t border-stone-100">
+              <div className="flex gap-2 mt-3 pt-3 border-t border-border-subtle">
                 <button onClick={() => toggleRetired(p)} className="btn-ghost text-xs !py-1 !px-2">
                   {p.retired ? "Reactivate" : "Retire"}
                 </button>
@@ -292,7 +292,7 @@ export default function PoleBag() {
       />
 
       {undoFor && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-ink text-cream rounded-xl shadow-lg flex items-center gap-3 pl-4 pr-2 py-2 text-sm">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-bg-sunken text-text-primary rounded-xl shadow-lg flex items-center gap-3 pl-4 pr-2 py-2 text-sm">
           <span>
             Deleted <strong>{poleLenToFtIn(undoFor.length_in)} / {undoFor.weight_lb}lb</strong>
           </span>
@@ -304,7 +304,7 @@ export default function PoleBag() {
           </button>
           <button
             onClick={() => setUndoFor(null)}
-            className="text-stone-400 hover:text-cream px-2"
+            className="text-text-tertiary hover:text-text-primary px-2"
           >
             ✕
           </button>

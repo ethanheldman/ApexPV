@@ -22,7 +22,7 @@ export default function ConfirmDialog({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/30 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-bg-sunken/30 backdrop-blur-sm p-4"
       onClick={onCancel}
     >
       <div
@@ -30,7 +30,7 @@ export default function ConfirmDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="font-display font-bold text-xl tracking-tight">{title}</h2>
-        {message && <p className="text-sm text-stone-600 mt-2">{message}</p>}
+        {message && <p className="text-sm text-text-secondary mt-2">{message}</p>}
         <div className="flex gap-2 mt-5 justify-end">
           <button onClick={onCancel} className="btn-ghost">
             {cancelLabel}

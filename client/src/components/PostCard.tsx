@@ -64,24 +64,24 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
   if (isRepost && post.original && !embedded) {
     return (
       <article className="card overflow-hidden">
-        <header className="flex items-center gap-2 px-4 py-2.5 bg-stone-50 border-b border-stone-100 text-xs">
+        <header className="flex items-center gap-2 px-4 py-2.5 bg-bg-raised/30 border-b border-border-subtle text-xs">
           <Avatar
             seed={author.avatar_seed ?? author.handle}
             url={author.avatar_url}
             size={20}
           />
-          <span className="text-stone-600">
+          <span className="text-text-secondary">
             <Link to={`/u/${author.handle}`} className="font-semibold hover:underline">
               {author.display_name}
             </Link>{" "}
             reposted
           </span>
-          <span className="text-stone-400 ml-auto">{relTime(post.created_at)}</span>
+          <span className="text-text-tertiary ml-auto">{relTime(post.created_at)}</span>
         </header>
         {post.caption && (
           <p className="px-4 pt-2 pb-1 text-[14px]">{post.caption}</p>
         )}
-        <div className="m-3 mt-2 rounded-xl border border-stone-200 overflow-hidden">
+        <div className="m-3 mt-2 rounded-xl border border-border-subtle overflow-hidden">
           <PostCard post={post.original} embedded />
         </div>
       </article>
@@ -107,12 +107,12 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
             <Link to={`/u/${author.handle}`} className="font-semibold hover:underline">
               {author.display_name}
             </Link>
-            <span className="text-stone-500 text-sm">@{author.handle}</span>
+            <span className="text-text-secondary text-sm">@{author.handle}</span>
             {author.school && (
-              <span className="text-stone-400 text-sm">· {author.school}</span>
+              <span className="text-text-tertiary text-sm">· {author.school}</span>
             )}
             {!embedded && (
-              <span className="text-stone-400 text-xs ml-auto">{relTime(post.created_at)}</span>
+              <span className="text-text-tertiary text-xs ml-auto">{relTime(post.created_at)}</span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -123,10 +123,10 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
             )}
             {isPr && !isFirst && <span className="pill bg-emerald-500 text-white">PR</span>}
             {post.visibility === "private" && (
-              <span className="pill bg-stone-200 text-stone-700">🔒 private</span>
+              <span className="pill bg-bg-raised text-text-primary">🔒 private</span>
             )}
             {post.visibility === "followers" && (
-              <span className="pill bg-stone-200 text-stone-700">followers</span>
+              <span className="pill bg-bg-raised text-text-primary">followers</span>
             )}
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
       )}
 
       {top?.video_url?.startsWith("/uploads/") && (
-        <div className="mx-4 mb-2 mt-1 rounded-xl overflow-hidden bg-stone-900">
+        <div className="mx-4 mb-2 mt-1 rounded-xl overflow-hidden bg-bg-sunken">
           <video
             src={top.video_url}
             controls
@@ -151,7 +151,7 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
       {top && (
         <Link
           to={`/p/${post.id}`}
-          className="mx-4 mb-3 mt-2 block rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 transition-colors p-4"
+          className="mx-4 mb-3 mt-2 block rounded-xl border border-border-subtle bg-bg-raised/30 hover:bg-bg-raised transition-colors p-4"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -159,7 +159,7 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
               <div className="font-display font-extrabold text-3xl tracking-tight">
                 {fmt(top.bar_height_mm)}
               </div>
-              <div className="text-xs text-stone-500 mt-0.5">
+              <div className="text-xs text-text-secondary mt-0.5">
                 {unit === "metric"
                   ? `${(top.bar_height_mm / 25.4 / 12 | 0)}'${Math.round(((top.bar_height_mm / 25.4) - ((top.bar_height_mm / 25.4 / 12) | 0) * 12) * 4) / 4}"`
                   : mmToMeters(top.bar_height_mm)}
@@ -170,7 +170,7 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
                 {RESULT_LABEL[top.result]}
               </span>
               {top.miss_tags && (
-                <div className="mt-2 text-[11px] text-stone-500">
+                <div className="mt-2 text-[11px] text-text-secondary">
                   {(JSON.parse(top.miss_tags) as string[])
                     .map((t) => MISS_TAG_LABEL[t] ?? t)
                     .join(" · ")}
@@ -198,7 +198,7 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
       )}
 
       {!embedded && (
-        <footer className="flex items-center gap-1 px-3 pb-3 border-t border-stone-100 pt-2">
+        <footer className="flex items-center gap-1 px-3 pb-3 border-t border-border-subtle pt-2">
           <button
             onClick={toggleKudos}
             disabled={isOwner}
@@ -207,23 +207,23 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed " +
               (post.my_kudos
                 ? "bg-accent/15 text-accent"
-                : "text-stone-600 hover:bg-stone-100")
+                : "text-text-secondary hover:bg-bg-raised")
             }
           >
             ↑ Up & Over
-            <span className="text-stone-500 font-normal">{post.kudos_count}</span>
+            <span className="text-text-secondary font-normal">{post.kudos_count}</span>
           </button>
           <Link
             to={`/p/${post.id}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-stone-600 hover:bg-stone-100"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-bg-raised"
           >
             💬 <span>Comments</span>
-            <span className="text-stone-500 font-normal">{post.comments_count}</span>
+            <span className="text-text-secondary font-normal">{post.comments_count}</span>
           </Link>
           {me && !isOwner && (
             <button
               onClick={repost}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-stone-600 hover:bg-stone-100"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-bg-raised"
               title="Repost to your followers"
             >
               ⟲ <span>Repost</span>
@@ -231,7 +231,7 @@ export default function PostCard({ post: initial, embedded }: { post: Post; embe
           )}
           <button
             onClick={share}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-stone-600 hover:bg-stone-100 ml-auto"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-text-secondary hover:bg-bg-raised ml-auto"
             title="Copy link"
           >
             ↗ <span className="hidden sm:inline">Share</span>

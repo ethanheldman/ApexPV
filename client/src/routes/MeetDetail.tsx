@@ -47,7 +47,7 @@ export default function MeetDetail() {
   }, [id]);
 
   if (notFound) return <NotFound subject="meet" />;
-  if (!meet) return <div className="px-5 pt-6 text-stone-400">loading…</div>;
+  if (!meet) return <div className="px-5 pt-6 text-text-tertiary">loading…</div>;
 
   const allVideos = meet.participants.flatMap((p) =>
     p.videos.map((v) => ({ ...v, who: p })),
@@ -58,7 +58,7 @@ export default function MeetDetail() {
       <div className="card p-5 mb-5">
         <div className="label">Meet</div>
         <h1 className="font-display font-extrabold text-3xl tracking-tight">{meet.name}</h1>
-        <div className="text-stone-500 text-sm">
+        <div className="text-text-secondary text-sm">
           {fmtDate(meet.date)}
           {meet.location && ` · ${meet.location}`} · {meet.participants.length} participant
           {meet.participants.length === 1 ? "" : "s"}
@@ -66,10 +66,10 @@ export default function MeetDetail() {
       </div>
 
       <div className="label mb-2">Results</div>
-      <div className="card divide-y divide-stone-100 mb-6">
+      <div className="card divide-y divide-border-subtle mb-6">
         {meet.participants.map((p, i) => (
           <div key={p.user_id} className="p-4 flex items-center gap-4">
-            <div className="w-7 text-center font-mono font-bold text-stone-400">{i + 1}</div>
+            <div className="w-7 text-center font-mono font-bold text-text-tertiary">{i + 1}</div>
             <Link to={`/u/${p.handle}`}>
               <Avatar seed={p.avatar_seed ?? p.handle} url={p.avatar_url} size={40} />
             </Link>
@@ -77,7 +77,7 @@ export default function MeetDetail() {
               <Link to={`/u/${p.handle}`} className="font-semibold hover:underline">
                 {p.display_name}
               </Link>
-              <div className="text-[11px] text-stone-500 truncate">
+              <div className="text-[11px] text-text-secondary truncate">
                 @{p.handle}
                 {p.school && ` · ${p.school}`}
               </div>
@@ -86,7 +86,7 @@ export default function MeetDetail() {
               <div className="font-display font-extrabold text-xl">
                 {p.best ? fmt(p.best.bar_height_mm) : "—"}
               </div>
-              <div className="text-[11px] text-stone-400">
+              <div className="text-[11px] text-text-tertiary">
                 {p.attempts.length} attempts ·{" "}
                 {p.attempts.filter((a) => a.result === "clear").length} clears
                 {p.videos.length > 0 && ` · ${p.videos.length} 🎥`}
@@ -94,7 +94,7 @@ export default function MeetDetail() {
             </div>
             <Link
               to={`/log/${p.session_id}`}
-              className="text-xs text-stone-500 hover:text-ink hover:underline ml-2"
+              className="text-xs text-text-secondary hover:text-text-primary hover:underline ml-2"
             >
               session →
             </Link>
@@ -124,7 +124,7 @@ export default function MeetDetail() {
                       src={v.video_url ?? undefined}
                       controls
                       preload="metadata"
-                      className="w-full bg-stone-900 max-h-64 object-contain"
+                      className="w-full bg-bg-sunken max-h-64 object-contain"
                     />
                   )}
                   <div className={local ? "p-3" : ""}>

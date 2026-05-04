@@ -17,8 +17,8 @@ export default function AttemptRow({
   const { unit, fmt } = useUnit();
   const tags = attempt.miss_tags ? (JSON.parse(attempt.miss_tags) as string[]) : [];
   return (
-    <div className="grid grid-cols-[28px_1fr_auto] gap-3 items-center px-3 py-2 hover:bg-stone-50 rounded-lg group">
-      <div className="text-stone-400 text-xs font-mono text-right">{index}</div>
+    <div className="grid grid-cols-[28px_1fr_auto] gap-3 items-center px-3 py-2 hover:bg-bg-raised/30 rounded-lg group">
+      <div className="text-text-tertiary text-xs font-mono text-right">{index}</div>
       <div className="min-w-0">
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="font-display font-bold text-lg tracking-tight">
@@ -28,13 +28,13 @@ export default function AttemptRow({
             {RESULT_LABEL[attempt.result]}
           </span>
           {pole && (
-            <span className="text-xs text-stone-500">
+            <span className="text-xs text-text-secondary">
               {poleLenToFtIn(pole.length_in)} / {pole.weight_lb}lb{" "}
               {pole.nickname ? `· ${pole.nickname}` : ""}
             </span>
           )}
           {attempt.grip_in != null && (
-            <span className="text-xs text-stone-400">
+            <span className="text-xs text-text-tertiary">
               grip {inchesToFtIn(attempt.grip_in)}
             </span>
           )}
@@ -54,23 +54,23 @@ export default function AttemptRow({
             ))}
         </div>
         {tags.length > 0 && (
-          <div className="text-[11px] text-stone-500 mt-0.5">
+          <div className="text-[11px] text-text-secondary mt-0.5">
             {tags.map((t) => MISS_TAG_LABEL[t] ?? t).join(" · ")}
           </div>
         )}
         {attempt.notes && (
-          <div className="text-[12px] text-stone-600 mt-0.5 italic">"{attempt.notes}"</div>
+          <div className="text-[12px] text-text-secondary mt-0.5 italic">"{attempt.notes}"</div>
         )}
       </div>
       <div className="flex items-center gap-2">
-        <div className="text-[11px] text-stone-400 font-mono">
+        <div className="text-[11px] text-text-tertiary font-mono">
           {unit === "metric" ? mmToFtIn(attempt.bar_height_mm) : mmToMeters(attempt.bar_height_mm)}
         </div>
         {onDelete && (
           <button
             onClick={() => onDelete(attempt)}
             title="Delete this attempt"
-            className="text-stone-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity text-sm"
+            className="text-text-disabled hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-opacity text-sm"
           >
             ✕
           </button>

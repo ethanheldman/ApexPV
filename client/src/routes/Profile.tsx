@@ -132,7 +132,7 @@ export default function Profile() {
       />
     );
   }
-  if (!user) return <div className="px-5 pt-6 text-stone-400">loading…</div>;
+  if (!user) return <div className="px-5 pt-6 text-text-tertiary">loading…</div>;
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-5 pt-6 pb-10">
@@ -147,7 +147,7 @@ export default function Profile() {
             <h1 className="font-display font-extrabold text-2xl sm:text-3xl tracking-tight leading-tight">
               {user.display_name}
             </h1>
-            <div className="text-stone-500 text-sm break-words">
+            <div className="text-text-secondary text-sm break-words">
               @{user.handle}
               {user.school && ` · ${user.school}`}
               {user.gender && ` · ${GENDER_LABEL[user.gender]}`}
@@ -159,30 +159,30 @@ export default function Profile() {
             <div className="font-display font-extrabold text-2xl sm:text-3xl tracking-tight">
               {fmt(user.pr_height_mm)}
             </div>
-            <div className="text-[11px] text-stone-400">
+            <div className="text-[11px] text-text-tertiary">
               {unit === "metric" ? mmToFtIn(user.pr_height_mm) : mmToMeters(user.pr_height_mm)}
             </div>
           </div>
         </div>
 
-        {user.bio && <p className="text-sm text-stone-700 mt-3">{user.bio}</p>}
+        {user.bio && <p className="text-sm text-text-primary mt-3">{user.bio}</p>}
 
         <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4 text-sm">
           <div>
             <span className="font-semibold">{user.followers ?? 0}</span>{" "}
-            <span className="text-stone-500">followers</span>
+            <span className="text-text-secondary">followers</span>
           </div>
           <div>
             <span className="font-semibold">{user.following ?? 0}</span>{" "}
-            <span className="text-stone-500">following</span>
+            <span className="text-text-secondary">following</span>
           </div>
           <div>
             <span className="font-semibold">{user.total_attempts ?? 0}</span>{" "}
-            <span className="text-stone-500">attempts</span>
+            <span className="text-text-secondary">attempts</span>
           </div>
           <div>
             <span className="font-semibold">{user.total_clearances ?? 0}</span>{" "}
-            <span className="text-stone-500">clearances</span>
+            <span className="text-text-secondary">clearances</span>
           </div>
         </div>
 
@@ -204,8 +204,8 @@ export default function Profile() {
             className={
               "px-4 py-1.5 text-sm font-semibold rounded-lg " +
               (tab === t
-                ? "bg-ink text-cream"
-                : "bg-stone-100 text-stone-600 hover:bg-stone-200")
+                ? "bg-bg-sunken text-text-primary"
+                : "bg-bg-raised text-text-secondary hover:bg-bg-raised")
             }
           >
             {t === "posts" ? "Posts" : t === "stats" ? "Stats" : "Pole bag"}
@@ -222,7 +222,7 @@ export default function Profile() {
                   <div className="font-display font-bold text-lg">
                     @{user.handle} keeps their training private.
                   </div>
-                  <p className="text-stone-500 text-sm mt-2">
+                  <p className="text-text-secondary text-sm mt-2">
                     {hiddenCount} {hiddenCount === 1 ? "post is" : "posts are"} hidden from you.
                     {following === false && me && me.handle !== user.handle && (
                       <> Follow them to see followers-only sessions.</>
@@ -230,7 +230,7 @@ export default function Profile() {
                   </p>
                 </>
               ) : (
-                <div className="text-stone-500">No posts to show.</div>
+                <div className="text-text-secondary">No posts to show.</div>
               )}
             </div>
           ) : (
@@ -239,7 +239,7 @@ export default function Profile() {
                 <PostCard key={p.id} post={p} />
               ))}
               {hiddenCount > 0 && (
-                <div className="text-center text-xs text-stone-400 py-2">
+                <div className="text-center text-xs text-text-tertiary py-2">
                   + {hiddenCount} more hidden by privacy settings
                 </div>
               )}
@@ -254,13 +254,13 @@ export default function Profile() {
             <div className="flex items-baseline justify-between mb-2">
               <div className="label">Clearance progression</div>
               {chartData.length > 0 && (
-                <div className="text-xs text-stone-500">
-                  apex: <span className="font-bold text-ink">{fmt(yMax)}</span>
+                <div className="text-xs text-text-secondary">
+                  apex: <span className="font-bold text-text-primary">{fmt(yMax)}</span>
                 </div>
               )}
             </div>
             {chartData.length === 0 ? (
-              <div className="text-stone-400 text-sm py-12 text-center">No clearances yet.</div>
+              <div className="text-text-tertiary text-sm py-12 text-center">No clearances yet.</div>
             ) : (
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -323,7 +323,7 @@ export default function Profile() {
           <div className="card p-5">
             <div className="label mb-3">Why misses happen</div>
             {missCounts.length === 0 ? (
-              <div className="text-stone-400 text-sm">No tagged misses yet.</div>
+              <div className="text-text-tertiary text-sm">No tagged misses yet.</div>
             ) : (
               <div className="space-y-1.5">
                 {missCounts.map((m) => {
@@ -332,10 +332,10 @@ export default function Profile() {
                   return (
                     <div key={m.tag}>
                       <div className="flex justify-between text-xs mb-0.5">
-                        <span className="text-stone-700">{MISS_TAG_LABEL[m.tag] ?? m.tag}</span>
-                        <span className="text-stone-500 font-mono">{m.count}</span>
+                        <span className="text-text-primary">{MISS_TAG_LABEL[m.tag] ?? m.tag}</span>
+                        <span className="text-text-secondary font-mono">{m.count}</span>
                       </div>
-                      <div className="h-2 rounded-full bg-stone-100 overflow-hidden">
+                      <div className="h-2 rounded-full bg-bg-raised overflow-hidden">
                         <div
                           className="h-full bg-accent/80"
                           style={{ width: `${Math.max(8, pct)}%` }}
@@ -353,7 +353,7 @@ export default function Profile() {
       {tab === "poles" && (
         <div className="grid sm:grid-cols-2 gap-3">
           {poles.length === 0 ? (
-            <div className="card p-6 text-stone-500 sm:col-span-2 text-center">
+            <div className="card p-6 text-text-secondary sm:col-span-2 text-center">
               No poles in the bag.
             </div>
           ) : (
@@ -368,18 +368,18 @@ export default function Profile() {
                     <div className="font-display font-bold text-xl">
                       {poleLenToFtIn(p.length_in)} / {p.weight_lb}lb
                     </div>
-                    <div className="text-sm text-stone-500">{p.make}</div>
+                    <div className="text-sm text-text-secondary">{p.make}</div>
                     {p.nickname && (
-                      <div className="text-xs text-stone-400 italic mt-0.5">"{p.nickname}"</div>
+                      <div className="text-xs text-text-tertiary italic mt-0.5">"{p.nickname}"</div>
                     )}
                   </div>
                   {p.retired ? (
-                    <span className="pill bg-stone-200 text-stone-600">retired</span>
+                    <span className="pill bg-bg-raised text-text-secondary">retired</span>
                   ) : (
                     <span className="pill bg-emerald-100 text-emerald-800">active</span>
                   )}
                 </div>
-                <div className="flex gap-3 mt-3 text-xs text-stone-500">
+                <div className="flex gap-3 mt-3 text-xs text-text-secondary">
                   {p.flex != null && <span>flex {p.flex}</span>}
                   <span>{p.attempts_count} attempts →</span>
                 </div>
