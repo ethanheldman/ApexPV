@@ -15,6 +15,7 @@ const EMPTY = {
   weight_lb: 145,
   flex: 14.0,
   nickname: "",
+  target_step_in: "" as number | "",
 };
 
 export default function PoleBag() {
@@ -67,6 +68,8 @@ export default function PoleBag() {
           weight_lb: Number(form.weight_lb),
           flex: form.flex ? Number(form.flex) : null,
           nickname: form.nickname || null,
+          target_step_in:
+            form.target_step_in === "" ? null : Number(form.target_step_in),
         },
       });
       setForm({ ...EMPTY });
@@ -208,7 +211,7 @@ export default function PoleBag() {
               onChange={(e) => setForm({ ...form, flex: Number(e.target.value) })}
             />
           </div>
-          <div className="sm:col-span-4">
+          <div className="sm:col-span-2">
             <div className="label mb-1">nickname (optional)</div>
             <input
               className="input"
@@ -217,6 +220,27 @@ export default function PoleBag() {
               onChange={(e) => setForm({ ...form, nickname: e.target.value })}
               placeholder="Greenie, Sting, Old Reliable…"
             />
+          </div>
+          <div className="sm:col-span-2">
+            <div className="label mb-1">target step (in)</div>
+            <NumberField
+              decimal
+              className="input"
+              step="0.5"
+              min={0}
+              max={200}
+              value={form.target_step_in}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  target_step_in: e.target.value === "" ? "" : Number(e.target.value),
+                })
+              }
+              placeholder="e.g. 102"
+            />
+            <p className="text-[11px] text-stone-500 mt-1">
+              Where you take off on this pole. Powers the under/on/out tag.
+            </p>
           </div>
           <div className="sm:col-span-5 flex items-end gap-3">
             {error && <div className="text-rose-700 text-sm flex-1">{error}</div>}
@@ -252,8 +276,13 @@ export default function PoleBag() {
                     <span className="pill bg-emerald-100 text-emerald-800">active</span>
                   )}
                 </div>
-                <div className="flex gap-3 mt-3 text-xs text-stone-500">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3 text-xs text-stone-500">
                   {p.flex != null && <span>flex {p.flex}</span>}
+                  {p.target_step_in != null && (
+                    <span>
+                      step <strong className="text-stone-700">{p.target_step_in}"</strong>
+                    </span>
+                  )}
                   <span>
                     {p.attempts_count} attempt{p.attempts_count === 1 ? "" : "s"} →
                   </span>

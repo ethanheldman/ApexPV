@@ -114,6 +114,40 @@ export function ftInToInches(ft: number, inches: number): number {
   return Math.round((ft * 12 + inches) * 100) / 100;
 }
 
+/** Tolerance (inches) within which an actual step is considered 'on the mark'. */
+export const STEP_TOLERANCE_IN = 2;
+
+export type StepStatus = "under" | "on" | "out" | null;
+
+/**
+ * Classify an actual step (inches from box) against a pole's target step.
+ *  - actual < target − tolerance → 'under' (took off too close to the box)
+ *  - actual > target + tolerance → 'out'   (took off too far from the box)
+ *  - else                         → 'on'
+ */
+export function stepStatus(
+  actualIn: number | null | undefined,
+  targetIn: number | null | undefined,
+): StepStatus {
+  if (actualIn == null || targetIn == null) return null;
+  const delta = actualIn - targetIn;
+  if (delta < -STEP_TOLERANCE_IN) return "under";
+  if (delta > STEP_TOLERANCE_IN) return "out";
+  return "on";
+}
+
+export const STEP_STATUS_LABEL: Record<NonNullable<StepStatus>, string> = {
+  under: "under",
+  on: "on",
+  out: "out",
+};
+
+export const STEP_STATUS_COLOR: Record<NonNullable<StepStatus>, string> = {
+  under: "bg-rose-100 text-rose-900",
+  on: "bg-emerald-100 text-emerald-900",
+  out: "bg-amber-100 text-amber-900",
+};
+
 export function fmtDate(s: string): string {
   return new Date(s + "T12:00:00").toLocaleDateString(undefined, {
     weekday: "short",

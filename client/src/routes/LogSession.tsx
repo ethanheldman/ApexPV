@@ -9,7 +9,17 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import VideoDrop from "../components/VideoDrop";
 import AddPoleDialog from "../components/AddPoleDialog";
 import NumberField from "../components/NumberField";
-import { ftInToMm, mmToFtIn, poleLenToFtIn, inchesToFtIn, ftInToInches, todayLocal } from "../lib/format";
+import {
+  ftInToMm,
+  mmToFtIn,
+  poleLenToFtIn,
+  inchesToFtIn,
+  ftInToInches,
+  todayLocal,
+  stepStatus,
+  STEP_STATUS_COLOR,
+  STEP_STATUS_LABEL,
+} from "../lib/format";
 import { useUnit } from "../lib/unit";
 import { MISS_TAG_GROUPS } from "../lib/missTags";
 import type { Attempt, Meet, Pole, Session } from "../types";
@@ -619,17 +629,56 @@ export default function LogSession() {
 
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
-            <div className="label mb-1">step (in from box)</div>
-            <NumberField
-              decimal
-              className="input"
-              min={0}
-              max={200}
-              value={att.step_in}
-              onChange={(e) =>
-                setAtt({ ...att, step_in: e.target.value === "" ? "" : Number(e.target.value) })
-              }
-            />
+            {(() => {
+              // Live under / on / out feedback against the selected pole's target step.
+              // Only renders when both a step value AND a pole-with-target are present.
+              const selectedPole = poles.find((p) => p.id === att.poleId);
+              const target = selectedPole?.target_step_in ?? null;
+              const actual = att.step_in === "" ? null : Number(att.step_in);
+              const status = stepStatus(actual, target);
+              return (
+                <>
+                  <div className="label mb-1 flex items-center justify-between">
+                    <span>step (in from box)</span>
+                    {target != null && (
+                      <span className="font-normal text-stone-400 lowercase tracking-normal">
+                        target {target}"
+                      </span>
+                    )}
+                  </div>
+                  <NumberField
+                    decimal
+                    className="input"
+                    min={0}
+                    max={200}
+                    value={att.step_in}
+                    onChange={(e) =>
+                      setAtt({
+                        ...att,
+                        step_in: e.target.value === "" ? "" : Number(e.target.value),
+                      })
+                    }
+                  />
+                  {status && (
+                    <div className="mt-1.5">
+                      <span className={"pill " + STEP_STATUS_COLOR[status]}>
+                        {STEP_STATUS_LABEL[status]}
+                        {actual != null && target != null && (
+                          <span className="ml-1 opacity-70 normal-case">
+                            ({(actual - target > 0 ? "+" : "") + (actual - target).toFixed(1)}")
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  {target == null && selectedPole && actual != null && (
+                    <p className="text-[11px] text-stone-500 mt-1">
+                      Set a target step on this pole to see under/on/out feedback.
+                    </p>
+                  )}
+                </>
+              );
+            })()}
           </div>
           <div>
             <div className="label mb-1">run-up steps</div>

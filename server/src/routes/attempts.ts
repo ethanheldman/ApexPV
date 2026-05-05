@@ -169,6 +169,46 @@ export async function attemptRoutes(app: FastifyInstance) {
     );
   });
 
+  // Step quality — count attempts as under / on / out compared to each pole's
+  // target_step_in. Tolerance ±2 inches counts as 'on'. Attempts on poles
+  // with no target_step_in (or with no step logged) are bucketed as 'untagged'
+  // so we don't lie about coverage.
+  app.get<{ Params: { handle: string } }>("/stats/:handle/step-quality", async (req, reply) => {
+    const u = await qOne<{ id: number }>("SELECT id FROM users WHERE handle = ?", [
+      req.params.handle,
+    ]);
+    if (!u) return reply.code(404).send({ error: "not found" });
+    const TOL = 2.0;
+    const row = await qOne<{
+      under_n: number;
+      on_n: number;
+      out_n: number;
+      untagged_n: number;
+      total_n: number;
+    }>(
+      `SELECT
+         COUNT(*) FILTER (WHERE p.target_step_in IS NOT NULL AND a.step_in IS NOT NULL
+                           AND a.step_in < p.target_step_in - ?)::int AS under_n,
+         COUNT(*) FILTER (WHERE p.target_step_in IS NOT NULL AND a.step_in IS NOT NULL
+                           AND ABS(a.step_in - p.target_step_in) <= ?)::int AS on_n,
+         COUNT(*) FILTER (WHERE p.target_step_in IS NOT NULL AND a.step_in IS NOT NULL
+                           AND a.step_in > p.target_step_in + ?)::int AS out_n,
+         COUNT(*) FILTER (WHERE p.target_step_in IS NULL OR a.step_in IS NULL)::int AS untagged_n,
+         COUNT(*)::int AS total_n
+       FROM attempts a
+       LEFT JOIN poles p ON p.id = a.pole_id
+       WHERE a.user_id = ?`,
+      [TOL, TOL, TOL, u.id],
+    );
+    return {
+      under: row?.under_n ?? 0,
+      on: row?.on_n ?? 0,
+      out: row?.out_n ?? 0,
+      untagged: row?.untagged_n ?? 0,
+      total: row?.total_n ?? 0,
+    };
+  });
+
   app.get<{ Params: { handle: string } }>("/stats/:handle/miss-tags", async (req, reply) => {
     const u = await qOne<{ id: number }>("SELECT id FROM users WHERE handle = ?", [
       req.params.handle,

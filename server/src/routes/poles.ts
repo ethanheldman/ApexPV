@@ -10,6 +10,7 @@ const PoleBody = z.object({
   flex: z.number().min(5).max(30).nullable().optional(),
   nickname: z.string().max(40).nullable().optional(),
   retired: z.boolean().optional(),
+  target_step_in: z.number().min(0).max(200).nullable().optional(),
 });
 
 const ACTIVE = "deleted_at IS NULL";
@@ -38,8 +39,8 @@ export async function poleRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: parsed.error.message });
     const p = parsed.data;
     const id = await qInsertId(
-      `INSERT INTO poles (user_id, make, length_in, weight_lb, flex, nickname, retired)
-       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      `INSERT INTO poles (user_id, make, length_in, weight_lb, flex, nickname, retired, target_step_in)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         req.user.id,
         p.make,
@@ -48,6 +49,7 @@ export async function poleRoutes(app: FastifyInstance) {
         p.flex ?? null,
         p.nickname ?? null,
         p.retired ? 1 : 0,
+        p.target_step_in ?? null,
       ],
     );
     return qOne<Pole>("SELECT * FROM poles WHERE id = ?", [id]);
@@ -134,7 +136,8 @@ export async function poleRoutes(app: FastifyInstance) {
           weight_lb = COALESCE(?, weight_lb),
           flex = COALESCE(?, flex),
           nickname = COALESCE(?, nickname),
-          retired = COALESCE(?, retired)
+          retired = COALESCE(?, retired),
+          target_step_in = COALESCE(?, target_step_in)
          WHERE id = ?`,
         [
           p.make ?? null,
@@ -143,6 +146,7 @@ export async function poleRoutes(app: FastifyInstance) {
           p.flex ?? null,
           p.nickname ?? null,
           p.retired === undefined ? null : p.retired ? 1 : 0,
+          p.target_step_in ?? null,
           id,
         ],
       );

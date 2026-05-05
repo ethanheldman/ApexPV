@@ -30,6 +30,8 @@ export type Pole = {
   nickname: string | null;
   retired: number;
   attempts_count: number;
+  /** Expected step distance from box (inches) for this pole. */
+  target_step_in: number | null;
   deleted_at?: string | null;
 };
 

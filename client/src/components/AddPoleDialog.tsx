@@ -19,6 +19,7 @@ const EMPTY = {
   weight_lb: 145,
   flex: "" as number | "",
   nickname: "",
+  target_step_in: "" as number | "",
 };
 
 export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
@@ -68,6 +69,7 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
           weight_lb: Number(form.weight_lb),
           flex: form.flex === "" ? null : Number(form.flex),
           nickname: form.nickname || null,
+          target_step_in: form.target_step_in === "" ? null : Number(form.target_step_in),
         },
       });
       onCreated(pole);
@@ -220,6 +222,29 @@ export default function AddPoleDialog({ open, onClose, onCreated }: Props) {
               placeholder="Greenie"
             />
           </div>
+        </div>
+
+        <div>
+          <div className="label mb-1">target step (in from box, opt)</div>
+          <NumberField
+            decimal
+            className="input"
+            step="0.5"
+            min={0}
+            max={200}
+            value={form.target_step_in}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                target_step_in: e.target.value === "" ? "" : Number(e.target.value),
+              })
+            }
+            placeholder="e.g. 102"
+          />
+          <p className="text-[11px] text-stone-500 mt-1">
+            Where you want to be at takeoff on this pole. Used to mark each
+            attempt as <strong>under</strong> / <strong>on</strong> / <strong>out</strong>.
+          </p>
         </div>
 
         {err && <div className="text-rose-700 text-sm">{err}</div>}

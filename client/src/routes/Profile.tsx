@@ -44,6 +44,13 @@ export default function Profile() {
   const [poles, setPoles] = useState<Pole[]>([]);
   const [progression, setProgression] = useState<{ date: string; height: number }[]>([]);
   const [missCounts, setMissCounts] = useState<{ tag: string; count: number }[]>([]);
+  const [stepQuality, setStepQuality] = useState<{
+    under: number;
+    on: number;
+    out: number;
+    untagged: number;
+    total: number;
+  } | null>(null);
   const [following, setFollowing] = useState<boolean | null>(null);
   const [tab, setTab] = useState<"posts" | "stats" | "poles">("posts");
 
@@ -76,6 +83,11 @@ export default function Profile() {
     api<{ tag: string; count: number }[]>(`/api/attempts/stats/${handle}/miss-tags`)
       .then(setMissCounts)
       .catch(() => setMissCounts([]));
+    api<{ under: number; on: number; out: number; untagged: number; total: number }>(
+      `/api/attempts/stats/${handle}/step-quality`,
+    )
+      .then(setStepQuality)
+      .catch(() => setStepQuality(null));
 
     if (me && me.handle !== handle) {
       api<{ following: boolean }>(`/api/users/${handle}/follow-status`)
@@ -319,6 +331,76 @@ export default function Profile() {
               </div>
             )}
           </div>
+
+          {stepQuality && stepQuality.under + stepQuality.on + stepQuality.out > 0 && (
+            <div className="card p-5">
+              <div className="label mb-1">Step quality</div>
+              {(() => {
+                const tagged = stepQuality.under + stepQuality.on + stepQuality.out;
+                const pct = (n: number) => (tagged > 0 ? Math.round((n / tagged) * 100) : 0);
+                return (
+                  <>
+                    <p className="text-[11px] text-stone-500 mb-3">
+                      Across {tagged} attempt{tagged === 1 ? "" : "s"} where the pole had a target step set.
+                    </p>
+                    {/* Stacked-bar split into under / on / out */}
+                    <div className="h-3 rounded-full overflow-hidden flex bg-stone-100 mb-3">
+                      <div
+                        className="bg-rose-500 h-full"
+                        style={{ width: `${pct(stepQuality.under)}%` }}
+                        title={`under: ${stepQuality.under}`}
+                      />
+                      <div
+                        className="bg-emerald-500 h-full"
+                        style={{ width: `${pct(stepQuality.on)}%` }}
+                        title={`on: ${stepQuality.on}`}
+                      />
+                      <div
+                        className="bg-amber-500 h-full"
+                        style={{ width: `${pct(stepQuality.out)}%` }}
+                        title={`out: ${stepQuality.out}`}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div>
+                        <div className="font-display font-bold text-xl text-rose-600 tabular-nums">
+                          {pct(stepQuality.under)}%
+                        </div>
+                        <div className="text-[11px] uppercase tracking-wider text-stone-500">
+                          under
+                        </div>
+                        <div className="text-[10px] text-stone-400">{stepQuality.under}</div>
+                      </div>
+                      <div>
+                        <div className="font-display font-bold text-xl text-emerald-600 tabular-nums">
+                          {pct(stepQuality.on)}%
+                        </div>
+                        <div className="text-[11px] uppercase tracking-wider text-stone-500">
+                          on
+                        </div>
+                        <div className="text-[10px] text-stone-400">{stepQuality.on}</div>
+                      </div>
+                      <div>
+                        <div className="font-display font-bold text-xl text-amber-600 tabular-nums">
+                          {pct(stepQuality.out)}%
+                        </div>
+                        <div className="text-[11px] uppercase tracking-wider text-stone-500">
+                          out
+                        </div>
+                        <div className="text-[10px] text-stone-400">{stepQuality.out}</div>
+                      </div>
+                    </div>
+                    {stepQuality.untagged > 0 && (
+                      <p className="text-[11px] text-stone-400 mt-3 text-center">
+                        +{stepQuality.untagged} attempt{stepQuality.untagged === 1 ? "" : "s"}{" "}
+                        without a target on the pole / no step logged
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
 
           <div className="card p-5">
             <div className="label mb-3">Why misses happen</div>
