@@ -27,7 +27,7 @@ function pick(seed: string): [string, string] {
 }
 
 export default function Avatar({ seed, url, size = 40, ring }: Props) {
-  const ringClass = ring ? "ring-2 ring-text-primary" : "";
+  const ringClass = ring ? "ring-2 ring-cream" : "";
   if (url) {
     return (
       <img

@@ -11,18 +11,18 @@ export default function Nav() {
 
   const link = (active: boolean) =>
     "px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors " +
-    (active ? "bg-bg-sunken text-text-primary" : "text-text-primary hover:bg-bg-raised");
+    (active ? "bg-ink text-cream" : "text-stone-700 hover:bg-stone-200");
 
   const inMeet = loc.pathname.startsWith("/meet");
 
   return (
     <header
-      className="sticky top-0 z-30 bg-bg-base/85 backdrop-blur border-b border-border-subtle"
+      className="sticky top-0 z-30 bg-cream/85 backdrop-blur border-b border-stone-200"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       <div className="mx-auto max-w-6xl flex items-center justify-between px-4 sm:px-5 py-3 gap-2 sm:gap-3">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="h-7 w-7 rounded-lg bg-bg-sunken grid place-items-center text-text-primary font-display font-bold">
+          <div className="h-7 w-7 rounded-lg bg-ink grid place-items-center text-cream font-display font-bold">
             A
           </div>
           <div className="font-display font-bold text-lg tracking-tight">apex</div>
@@ -45,7 +45,7 @@ export default function Nav() {
                 Pole Bag
               </NavLink>
               {inMeet ? (
-                <span className="ml-2 px-3 py-1.5 rounded-lg bg-bg-raised text-text-primary text-sm font-semibold">
+                <span className="ml-2 px-3 py-1.5 rounded-lg bg-stone-100 text-stone-700 text-sm font-semibold">
                   Meet Mode
                 </span>
               ) : (
@@ -69,13 +69,13 @@ export default function Nav() {
                   <div className="text-sm font-semibold group-hover:underline">
                     {user.display_name}
                   </div>
-                  <div className="text-[11px] text-text-secondary">@{user.handle}</div>
+                  <div className="text-[11px] text-stone-500">@{user.handle}</div>
                 </div>
               </NavLink>
               <Link
                 to="/settings"
                 title="Settings"
-                className="hidden md:grid text-text-secondary hover:text-text-primary text-lg w-8 h-8 place-items-center rounded-lg hover:bg-bg-raised"
+                className="hidden md:grid text-stone-500 hover:text-ink text-lg w-8 h-8 place-items-center rounded-lg hover:bg-stone-100"
               >
                 ⚙
               </Link>
@@ -84,7 +84,7 @@ export default function Nav() {
                   logout();
                   nav("/login");
                 }}
-                className="hidden md:inline text-xs text-text-secondary hover:text-text-primary"
+                className="hidden md:inline text-xs text-stone-500 hover:text-ink"
               >
                 sign out
               </button>

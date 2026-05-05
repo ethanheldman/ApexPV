@@ -30,7 +30,7 @@ export default function Signup() {
     <div className="mx-auto max-w-md px-5 pt-10">
       <div className="card p-6">
         <h1 className="font-display font-extrabold text-3xl tracking-tight">Create an account</h1>
-        <p className="text-text-secondary text-sm mt-1">Start your vault journal in 30 seconds.</p>
+        <p className="text-stone-500 text-sm mt-1">Start your vault journal in 30 seconds.</p>
 
         <form
           className="mt-6 space-y-3"
@@ -81,7 +81,7 @@ export default function Signup() {
               pattern={`[^\\s/\\\\?#&%<>"]+`}
               title={`Letters, digits, dots, hyphens — anything except whitespace or / \\ ? # & % < > "`}
             />
-            <div className="text-[11px] text-text-secondary mt-1">
+            <div className="text-[11px] text-stone-500 mt-1">
               dots, dashes, underscores, emoji are all fine
             </div>
           </div>
@@ -143,9 +143,9 @@ export default function Signup() {
           </button>
         </form>
 
-        <div className="text-center text-sm text-text-secondary mt-6">
+        <div className="text-center text-sm text-stone-500 mt-6">
           Already have one?{" "}
-          <Link to="/login" className="font-semibold text-text-primary underline">
+          <Link to="/login" className="font-semibold text-ink underline">
             Sign in
           </Link>
         </div>

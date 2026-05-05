@@ -276,8 +276,8 @@ export default function LogSession() {
                 className={
                   "py-2 rounded-xl font-semibold text-sm capitalize " +
                   (meta.type === t
-                    ? "bg-bg-sunken text-text-primary"
-                    : "bg-bg-raised text-text-primary hover:bg-bg-raised")
+                    ? "bg-ink text-cream"
+                    : "bg-stone-100 text-stone-700 hover:bg-stone-200")
                 }
               >
                 {t}
@@ -306,8 +306,8 @@ export default function LogSession() {
                     className={
                       "py-2 rounded-xl text-sm font-semibold capitalize " +
                       (meta.surface === s
-                        ? "bg-bg-sunken text-text-primary"
-                        : "bg-bg-raised text-text-primary hover:bg-bg-raised")
+                        ? "bg-ink text-cream"
+                        : "bg-stone-100 text-stone-700 hover:bg-stone-200")
                     }
                   >
                     {s}
@@ -333,7 +333,7 @@ export default function LogSession() {
                 <button
                   type="button"
                   onClick={() => setMeetMenuOpen((v) => !v)}
-                  className="absolute right-0 top-0 h-full px-3 text-text-tertiary hover:text-text-primary"
+                  className="absolute right-0 top-0 h-full px-3 text-stone-400 hover:text-ink"
                   tabIndex={-1}
                   aria-label="Browse meets"
                 >
@@ -347,15 +347,15 @@ export default function LogSession() {
                     <button
                       type="button"
                       onClick={() => setMeetMenuOpen(false)}
-                      className="block w-full text-left px-3 py-2 hover:bg-bg-raised/30 text-sm border-b border-border-subtle"
+                      className="block w-full text-left px-3 py-2 hover:bg-stone-50 text-sm border-b border-stone-100"
                     >
-                      <span className="text-text-secondary">+ create new meet </span>
+                      <span className="text-stone-500">+ create new meet </span>
                       <span className="font-semibold">"{meta.meetName.trim()}"</span>
                     </button>
                   )}
 
                   {meetMatches.length === 0 ? (
-                    <div className="px-3 py-4 text-text-tertiary text-sm text-center">
+                    <div className="px-3 py-4 text-stone-400 text-sm text-center">
                       {meta.meetName
                         ? "No meets match — keep typing to create a new one."
                         : "No meets created yet. Type a name to start one."}
@@ -380,12 +380,12 @@ export default function LogSession() {
                             setMeetMenuOpen(false);
                           }}
                           className={
-                            "block w-full text-left px-3 py-2 hover:bg-bg-raised/30 text-sm " +
-                            (meta.meetId === m.id ? "bg-bg-raised/30" : "")
+                            "block w-full text-left px-3 py-2 hover:bg-stone-50 text-sm " +
+                            (meta.meetId === m.id ? "bg-stone-50" : "")
                           }
                         >
                           <div className="font-semibold">{m.name}</div>
-                          <div className="text-xs text-text-secondary">
+                          <div className="text-xs text-stone-500">
                             {m.date}
                             {m.location && ` · ${m.location}`}
                           </div>
@@ -396,7 +396,7 @@ export default function LogSession() {
                 </div>
               )}
 
-              <p className="text-[11px] text-text-secondary mt-1">
+              <p className="text-[11px] text-stone-500 mt-1">
                 {meta.meetId
                   ? "Joining an existing meet — your session will show up on the meet page."
                   : "Pick an existing meet to share results with everyone else who was there, or type a new name."}
@@ -425,7 +425,7 @@ export default function LogSession() {
                     "flex-1 py-2 rounded-xl text-sm font-bold " +
                     (meta.energy === n
                       ? "bg-accent text-white"
-                      : "bg-bg-raised text-text-primary hover:bg-bg-raised")
+                      : "bg-stone-100 text-stone-700 hover:bg-stone-200")
                   }
                 >
                   {n}
@@ -487,7 +487,7 @@ export default function LogSession() {
             <div className="font-display font-extrabold text-5xl tracking-tight leading-none mt-1">
               {fmt(heightMm)}
             </div>
-            <div className="text-xs text-text-secondary mt-1 font-mono">
+            <div className="text-xs text-stone-500 mt-1 font-mono">
               {(heightMm / 1000).toFixed(2)}m · {heightMm}mm
             </div>
           </div>
@@ -531,7 +531,7 @@ export default function LogSession() {
                 onClick={() => setAtt({ ...att, result: r.id })}
                 className={
                   "py-3 rounded-xl text-sm font-bold transition-colors " +
-                  (att.result === r.id ? r.color : "bg-bg-raised text-text-primary hover:bg-bg-raised")
+                  (att.result === r.id ? r.color : "bg-stone-100 text-stone-700 hover:bg-stone-200")
                 }
               >
                 {r.label}
@@ -571,7 +571,7 @@ export default function LogSession() {
             <div className="label mb-1">
               grip{" "}
               {gripInches != null && (
-                <span className="font-normal text-text-tertiary">
+                <span className="font-normal text-stone-400">
                   · {inchesToFtIn(gripInches)} ({gripInches}")
                 </span>
               )}
@@ -590,7 +590,7 @@ export default function LogSession() {
                     })
                   }
                 />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
                   ft
                 </span>
               </div>
@@ -609,7 +609,7 @@ export default function LogSession() {
                     })
                   }
                 />
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary text-sm">
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-sm">
                   in
                 </span>
               </div>
@@ -651,7 +651,7 @@ export default function LogSession() {
             <div className="space-y-3">
               {MISS_TAG_GROUPS.map((g) => (
                 <div key={g.group}>
-                  <div className="text-[11px] font-semibold text-text-secondary mb-1">{g.group}</div>
+                  <div className="text-[11px] font-semibold text-stone-500 mb-1">{g.group}</div>
                   <div className="flex flex-wrap gap-1.5">
                     {g.tags.map((t) => {
                       const on = att.missTags.includes(t.id);
@@ -663,8 +663,8 @@ export default function LogSession() {
                           className={
                             "px-2.5 py-1 rounded-full text-[12px] font-medium " +
                             (on
-                              ? "bg-bg-sunken text-text-primary"
-                              : "bg-bg-raised text-text-primary hover:bg-bg-raised")
+                              ? "bg-ink text-cream"
+                              : "bg-stone-100 text-stone-700 hover:bg-stone-200")
                           }
                         >
                           {t.label}
@@ -710,7 +710,7 @@ export default function LogSession() {
                 {session?.type} · {session?.date}
               </div>
               {session?.location && (
-                <div className="text-xs text-text-secondary">{session.location}</div>
+                <div className="text-xs text-stone-500">{session.location}</div>
               )}
               {(session as any)?.meet && (
                 <Link
@@ -723,7 +723,7 @@ export default function LogSession() {
             </div>
             <div className="text-right">
               <div className="font-mono text-2xl font-bold">{attempts.length}</div>
-              <div className="text-[11px] text-text-secondary">attempts</div>
+              <div className="text-[11px] text-stone-500">attempts</div>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-4">
@@ -735,9 +735,9 @@ export default function LogSession() {
                 pass: "→ passes",
               };
               return (
-                <div key={r} className="rounded-lg bg-bg-raised/30 px-2 py-2 text-center">
+                <div key={r} className="rounded-lg bg-stone-50 px-2 py-2 text-center">
                   <div className="text-xl font-bold">{c}</div>
-                  <div className="text-[10px] text-text-secondary uppercase">{labels[r]}</div>
+                  <div className="text-[10px] text-stone-500 uppercase">{labels[r]}</div>
                 </div>
               );
             })}
@@ -747,7 +747,7 @@ export default function LogSession() {
         <div className="card p-2">
           <div className="px-2 pt-2 pb-1 label">Log</div>
           {attempts.length === 0 ? (
-            <div className="text-text-tertiary text-sm py-6 text-center">
+            <div className="text-stone-400 text-sm py-6 text-center">
               No attempts yet — go for it.
             </div>
           ) : (
@@ -769,7 +769,7 @@ export default function LogSession() {
         {session?.type === "meet" ? (
           <div className="card p-4">
             <div className="label mb-1">🌐 Meet · auto-posting</div>
-            <p className="text-sm text-text-secondary">
+            <p className="text-sm text-stone-600">
               This meet shows up publicly so people can see how it went. The post
               updates as you log attempts.
             </p>
@@ -781,7 +781,7 @@ export default function LogSession() {
                 View live meet post →
               </Link>
             ) : (
-              <p className="text-[11px] text-text-secondary mt-2">
+              <p className="text-[11px] text-stone-500 mt-2">
                 Log your first attempt and the post goes live.
               </p>
             )}
@@ -792,13 +792,13 @@ export default function LogSession() {
             <div className="grid grid-cols-3 gap-2 text-sm">
               <button
                 onClick={() => sharePost("private")}
-                className="rounded-lg bg-bg-raised hover:bg-bg-raised py-2 font-semibold"
+                className="rounded-lg bg-stone-100 hover:bg-stone-200 py-2 font-semibold"
               >
                 🔒 Private
               </button>
               <button
                 onClick={() => sharePost("followers")}
-                className="rounded-lg bg-bg-raised hover:bg-bg-raised py-2 font-semibold"
+                className="rounded-lg bg-stone-100 hover:bg-stone-200 py-2 font-semibold"
               >
                 👥 Followers
               </button>
@@ -869,7 +869,7 @@ function ReadOnlySessionView({
               {session.type} · {session.date}
             </div>
             {session.location && (
-              <div className="text-sm text-text-secondary">{session.location}</div>
+              <div className="text-sm text-stone-500">{session.location}</div>
             )}
             {session.meet && (
               <Link
@@ -882,7 +882,7 @@ function ReadOnlySessionView({
           </div>
           <div className="text-right">
             <div className="font-mono text-2xl font-bold">{attempts.length}</div>
-            <div className="text-[11px] text-text-secondary">attempts · {cleared} clears</div>
+            <div className="text-[11px] text-stone-500">attempts · {cleared} clears</div>
           </div>
         </div>
         {(session.cues_had || session.cues_work) && (
@@ -906,14 +906,14 @@ function ReadOnlySessionView({
           </div>
         )}
         {session.notes && (
-          <p className="text-sm text-text-primary mt-3 italic">"{session.notes}"</p>
+          <p className="text-sm text-stone-700 mt-3 italic">"{session.notes}"</p>
         )}
       </div>
 
       <div className="card p-2">
         <div className="px-2 pt-2 pb-1 label">Attempts</div>
         {attempts.length === 0 ? (
-          <div className="text-text-tertiary text-sm py-6 text-center">No attempts logged.</div>
+          <div className="text-stone-400 text-sm py-6 text-center">No attempts logged.</div>
         ) : (
           attempts.map((a, i) => (
             <AttemptRow
@@ -926,7 +926,7 @@ function ReadOnlySessionView({
         )}
       </div>
 
-      <div className="text-center text-xs text-text-tertiary mt-4">
+      <div className="text-center text-xs text-stone-400 mt-4">
         This isn't your session — you can view it but not log attempts.{" "}
         <Link to="/log" className="underline">
           Start your own →

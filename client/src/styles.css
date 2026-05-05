@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  /* Safe-area insets for iPhone notch + home indicator. */
   --sa-top: env(safe-area-inset-top, 0px);
   --sa-bottom: env(safe-area-inset-bottom, 0px);
   --sa-left: env(safe-area-inset-left, 0px);
@@ -16,85 +17,68 @@ html, body, #root {
 
 body {
   margin: 0;
-  background: #0A0B0D;
-  color: #F4F5F7;
+  background: #f7f5f0;
+  color: #0c0a09;
   font-family: "Inter", ui-sans-serif, system-ui;
-  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
+  /* Prevent rubber-band overscroll on iOS */
   overscroll-behavior-y: none;
 }
 
-/* iOS Safari refuses to use 100vh correctly with the dynamic chrome. */
+/* iOS Safari refuses to use 100vh correctly with the dynamic chrome.
+   Use svh on supporting browsers, fall back to vh elsewhere. */
 .min-h-screen-mobile {
   min-height: 100vh;
   min-height: 100svh;
 }
 
-/* Stop iOS auto-zoom on focused inputs. */
+/* Stop iOS from auto-zooming on focused inputs. Anything < 16px will zoom. */
 input, textarea, select {
   font-size: 16px;
-  color-scheme: dark; /* dark form widgets */
 }
 
-/* Hide scrollbars on internal pickers/heatmaps without disabling scroll. */
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* ── Legacy component classes — re-themed for dark mode. ─────────────────
-   These are used across screens that haven't been migrated to the new
-   primitives in src/components/ui yet (Profile, Settings, LogSession, etc.).
-   By rewriting the classes themselves, all legacy screens render in dark
-   without per-file edits. To be removed once every screen is migrated. */
 @layer components {
   .pill {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider;
   }
   .card {
-    @apply bg-bg-elevated border border-border-subtle rounded-lg;
+    @apply bg-white border border-stone-200 rounded-2xl;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold transition-all min-h-[44px] active:scale-[0.97];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors min-h-[44px];
   }
   .btn-primary {
-    @apply btn bg-accent text-accent-ink hover:bg-accent-hover active:bg-accent-pressed;
+    @apply btn bg-ink text-cream hover:bg-stone-700 active:bg-stone-800;
   }
   .btn-ghost {
-    @apply btn bg-bg-raised text-text-primary hover:bg-[#252934] active:bg-[#2C313B];
+    @apply btn bg-stone-100 text-ink hover:bg-stone-200 active:bg-stone-300;
   }
   .btn-accent {
-    @apply btn bg-accent text-accent-ink hover:bg-accent-hover active:bg-accent-pressed;
+    @apply btn bg-accent text-white hover:bg-orange-600 active:bg-orange-700;
   }
   .input {
-    @apply w-full rounded-md border border-transparent bg-bg-raised px-3 py-2.5 text-base text-text-primary placeholder:text-text-tertiary
-           focus:border-accent/40 focus:bg-bg-elevated focus:outline-none focus:ring-2 focus:ring-accent/30;
+    @apply w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-base focus:border-ink focus:outline-none focus:ring-2 focus:ring-ink/10;
+    /* Font-size already 16px globally; reaffirm here for clarity. */
   }
   .label {
-    @apply text-[11px] font-semibold uppercase tracking-wider text-text-tertiary;
+    @apply text-[11px] font-semibold uppercase tracking-wider text-stone-500;
   }
 }
 
-/* Padding utilities respecting iPhone safe areas */
+/* Padding utilities that respect iPhone safe areas */
 .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0px); }
 .pt-safe { padding-top: calc(env(safe-area-inset-top, 0px) + 0px); }
 .h-safe-bottom { height: env(safe-area-inset-bottom, 0px); }
 
-/* Reduced-motion: disable count-up, page transitions, pull spring (§7). */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+/* Mobile content gets bottom space so the fixed tab bar doesn't cover it. */
+@media (max-width: 767px) {
+  main {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 }
 
 .bar-chart-grid line {
-  stroke: #20232A;
+  stroke: #e7e5e4;
 }

@@ -46,7 +46,7 @@ export default function Leaderboard() {
       <h1 className="font-display font-extrabold text-3xl tracking-tight mb-2">
         Leaderboard
       </h1>
-      <p className="text-text-secondary text-sm mb-4">
+      <p className="text-stone-500 text-sm mb-4">
         Standing PRs. Ties broken by earliest date set.
       </p>
 
@@ -60,7 +60,7 @@ export default function Leaderboard() {
             onClick={() => setFilter("gender", g)}
           />
         ))}
-        <span className="w-px h-6 bg-bg-raised mx-1.5 self-center" />
+        <span className="w-px h-6 bg-stone-200 mx-1.5 self-center" />
         <FilterChip label="All levels" active={!level} onClick={() => setFilter("level", "")} />
         {(["hs", "college", "open", "masters"] as const).map((l) => (
           <FilterChip
@@ -73,16 +73,16 @@ export default function Leaderboard() {
       </div>
 
       {!rows ? (
-        <div className="text-text-tertiary">loading…</div>
+        <div className="text-stone-400">loading…</div>
       ) : rows.length === 0 ? (
-        <div className="card p-6 text-center text-text-secondary">No vaulters match those filters.</div>
+        <div className="card p-6 text-center text-stone-500">No vaulters match those filters.</div>
       ) : (
-        <div className="card divide-y divide-border-subtle">
+        <div className="card divide-y divide-stone-100">
           {rows.map((r) => (
             <Link
               key={r.handle}
               to={`/u/${r.handle}`}
-              className="flex items-center gap-4 p-4 hover:bg-bg-raised/30"
+              className="flex items-center gap-4 p-4 hover:bg-stone-50"
             >
               <div
                 className={
@@ -90,10 +90,10 @@ export default function Leaderboard() {
                   (r.rank === 1
                     ? "text-amber-500"
                     : r.rank === 2
-                      ? "text-text-secondary"
+                      ? "text-stone-500"
                       : r.rank === 3
                         ? "text-orange-700"
-                        : "text-text-tertiary")
+                        : "text-stone-400")
                 }
                 title={r.tied ? "Tie broken by earliest date set" : ""}
               >
@@ -102,7 +102,7 @@ export default function Leaderboard() {
               <Avatar seed={r.avatar_seed ?? r.handle} url={(r as any).avatar_url} size={40} />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold truncate">{r.display_name}</div>
-                <div className="text-xs text-text-secondary truncate">
+                <div className="text-xs text-stone-500 truncate">
                   @{r.handle}
                   {r.school && ` · ${r.school}`}
                   {r.level && ` · ${LEVEL_LABEL[r.level] ?? r.level}`}
@@ -112,7 +112,7 @@ export default function Leaderboard() {
                 <div className="font-display font-extrabold text-xl tracking-tight">
                   {fmt(r.pr_height_mm)}
                 </div>
-                <div className="text-[11px] text-text-tertiary">
+                <div className="text-[11px] text-stone-400">
                   {unit === "metric" ? mmToFtIn(r.pr_height_mm) : mmToMeters(r.pr_height_mm)}
                 </div>
               </div>
@@ -138,7 +138,7 @@ function FilterChip({
       onClick={onClick}
       className={
         "px-2.5 py-1 rounded-full text-[12px] font-semibold transition-colors " +
-        (active ? "bg-bg-sunken text-text-primary" : "bg-bg-raised text-text-primary hover:bg-bg-raised")
+        (active ? "bg-ink text-cream" : "bg-stone-100 text-stone-700 hover:bg-stone-200")
       }
     >
       {label}

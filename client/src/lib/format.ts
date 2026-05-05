@@ -158,7 +158,7 @@ export const RESULT_COLOR: Record<string, string> = {
   clear: "bg-emerald-100 text-emerald-900",
   knock: "bg-rose-100 text-rose-900",
   pass: "bg-amber-100 text-amber-900",
-  bail: "bg-bg-raised text-text-primary",
+  bail: "bg-stone-200 text-stone-700",
 };
 
 export const GENDER_LABEL: Record<string, string> = {

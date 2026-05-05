@@ -21,18 +21,18 @@ export default function Notifications() {
       <h1 className="font-display font-extrabold text-3xl tracking-tight mb-1">
         Notifications
       </h1>
-      <p className="text-text-secondary text-sm mb-5">
+      <p className="text-stone-500 text-sm mb-5">
         Up & Overs, comments, and new follows on your sessions.
       </p>
 
       {items === null ? (
-        <div className="text-text-tertiary">loading…</div>
+        <div className="text-stone-400">loading…</div>
       ) : items.length === 0 ? (
-        <div className="card p-8 text-center text-text-secondary">
+        <div className="card p-8 text-center text-stone-500">
           No notifications yet. Post something so the world can see it.
         </div>
       ) : (
-        <div className="card divide-y divide-border-subtle">
+        <div className="card divide-y divide-stone-100">
           {items.map((n) => {
             const isUnread = !n.read_at;
             const verb =
@@ -54,22 +54,22 @@ export default function Notifications() {
                       : "/"
                 }
                 className={
-                  "flex items-start gap-3 p-4 hover:bg-bg-raised/30 " +
-                  (isUnread ? "bg-bg-base/40" : "")
+                  "flex items-start gap-3 p-4 hover:bg-stone-50 " +
+                  (isUnread ? "bg-cream/40" : "")
                 }
               >
                 <Avatar seed={n.actor_seed ?? n.actor_handle ?? "?"} size={36} url={null} />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm">
                     <span className="font-semibold">{n.actor_name ?? "Someone"}</span>{" "}
-                    <span className="text-text-secondary">{verb}</span>
+                    <span className="text-stone-600">{verb}</span>
                   </div>
                   {n.comment_body && (
-                    <div className="text-sm text-text-secondary mt-0.5 truncate italic">
+                    <div className="text-sm text-stone-500 mt-0.5 truncate italic">
                       "{n.comment_body}"
                     </div>
                   )}
-                  <div className="text-[11px] text-text-tertiary mt-1">{relTime(n.created_at)}</div>
+                  <div className="text-[11px] text-stone-400 mt-1">{relTime(n.created_at)}</div>
                 </div>
                 {isUnread && (
                   <div className="w-2 h-2 rounded-full bg-accent shrink-0 mt-2" />

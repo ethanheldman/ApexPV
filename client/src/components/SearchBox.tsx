@@ -69,18 +69,18 @@ export default function SearchBox() {
                     setOpen(false);
                     setQ("");
                   }}
-                  className="flex items-center gap-3 p-2 hover:bg-bg-raised/30 rounded-lg"
+                  className="flex items-center gap-3 p-2 hover:bg-stone-50 rounded-lg"
                 >
                   <Avatar seed={u.avatar_seed ?? u.handle} size={32} />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{u.display_name}</div>
-                    <div className="text-[11px] text-text-secondary truncate">
+                    <div className="text-[11px] text-stone-500 truncate">
                       @{u.handle}
                       {u.school && ` · ${u.school}`}
                     </div>
                   </div>
                   {u.pr_height_mm && (
-                    <div className="font-mono text-[11px] text-text-primary">
+                    <div className="font-mono text-[11px] text-stone-700">
                       {mmToFtIn(u.pr_height_mm)}
                     </div>
                   )}
@@ -89,7 +89,7 @@ export default function SearchBox() {
             </div>
           )}
           {res.posts.length > 0 && (
-            <div className="border-t border-border-subtle p-2">
+            <div className="border-t border-stone-100 p-2">
               <div className="label px-2 mb-1">Posts</div>
               {res.posts.map((p) => (
                 <Link
@@ -99,10 +99,10 @@ export default function SearchBox() {
                     setOpen(false);
                     setQ("");
                   }}
-                  className="block p-2 hover:bg-bg-raised/30 rounded-lg"
+                  className="block p-2 hover:bg-stone-50 rounded-lg"
                 >
                   <div className="text-sm truncate">{p.caption}</div>
-                  <div className="text-[11px] text-text-secondary">@{p.handle}</div>
+                  <div className="text-[11px] text-stone-500">@{p.handle}</div>
                 </Link>
               ))}
             </div>

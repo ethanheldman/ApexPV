@@ -244,8 +244,8 @@ export default function Settings() {
               )}
             </div>
             {photoErr && <div className="text-rose-700 text-xs">{photoErr}</div>}
-            <details className="text-xs text-text-secondary">
-              <summary className="cursor-pointer hover:text-text-primary">
+            <details className="text-xs text-stone-500">
+              <summary className="cursor-pointer hover:text-ink">
                 …or paste a URL
               </summary>
               <input
@@ -324,11 +324,11 @@ export default function Settings() {
           />
         </div>
 
-        <div className="border-t border-border-subtle pt-3">
+        <div className="border-t border-stone-100 pt-3">
           <div className="label mb-2">Body stats (used by the step calculator)</div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <div className="label mb-1">height (cm) {profile.height_cm && <span className="font-normal text-text-tertiary">· {heightFtIn}</span>}</div>
+              <div className="label mb-1">height (cm) {profile.height_cm && <span className="font-normal text-stone-400">· {heightFtIn}</span>}</div>
               <NumberField
                 className="input"
                 min={120}
@@ -360,7 +360,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="border-t border-border-subtle pt-3">
+        <div className="border-t border-stone-100 pt-3">
           <div className="label mb-2">Display unit</div>
           <div className="grid grid-cols-2 gap-2">
             {(["imperial", "metric"] as const).map((u) => (
@@ -371,15 +371,15 @@ export default function Settings() {
                 className={
                   "py-2 rounded-xl text-sm font-semibold capitalize " +
                   (profile.unit_pref === u
-                    ? "bg-bg-sunken text-text-primary"
-                    : "bg-bg-raised text-text-primary hover:bg-bg-raised")
+                    ? "bg-ink text-cream"
+                    : "bg-stone-100 text-stone-700 hover:bg-stone-200")
                 }
               >
                 {u === "imperial" ? "Feet / inches" : "Meters"}
               </button>
             ))}
           </div>
-          <p className="text-[11px] text-text-secondary mt-1">
+          <p className="text-[11px] text-stone-500 mt-1">
             All heights across the app render in this unit. Flip back any time.
           </p>
         </div>
@@ -389,7 +389,7 @@ export default function Settings() {
 
       <div className="card p-5 space-y-3">
         <div className="label">Step calculator</div>
-        <p className="text-xs text-text-secondary">
+        <p className="text-xs text-stone-500">
           Heuristic from body height + weight. Trust your coach over a calculator.
         </p>
         <div>
@@ -403,7 +403,7 @@ export default function Settings() {
                   "py-1.5 rounded-lg text-xs font-semibold capitalize " +
                   (stepExp === e
                     ? "bg-accent text-white"
-                    : "bg-bg-raised text-text-primary hover:bg-bg-raised")
+                    : "bg-stone-100 text-stone-700 hover:bg-stone-200")
                 }
               >
                 {e}
@@ -416,7 +416,7 @@ export default function Settings() {
         </button>
         {stepErr && <div className="text-rose-700 text-sm">{stepErr}</div>}
         {stepResult && (
-          <div className="rounded-xl bg-bg-raised/30 p-4 text-sm">
+          <div className="rounded-xl bg-stone-50 p-4 text-sm">
             <div className="grid grid-cols-2 gap-3">
               <Stat label="Approach" value={`${stepResult.steps} steps`} />
               <Stat label="Stride length" value={`${stepResult.stride_in.toFixed(1)}"`} />
@@ -425,7 +425,7 @@ export default function Settings() {
               <Stat label="Pole weight rec" value={`${stepResult.recommended_pole_weight_lb} lb`} />
               <Stat label="Pole length rec" value={`${stepResult.recommended_pole_length_ft}'`} />
             </div>
-            <p className="text-[11px] text-text-secondary mt-3 italic">{stepResult.caveat}</p>
+            <p className="text-[11px] text-stone-500 mt-3 italic">{stepResult.caveat}</p>
           </div>
         )}
       </div>
@@ -456,14 +456,14 @@ export default function Settings() {
 
       <div className="card p-5">
         <div className="label mb-2">Account</div>
-        <div className="text-sm text-text-secondary">
+        <div className="text-sm text-stone-600">
           Handle: <span className="font-mono">@{user.handle}</span> (cannot be changed in this build)
         </div>
       </div>
 
       {err && <div className="text-rose-700 text-sm">{err}</div>}
       {savedFlash && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-bg-sunken text-text-primary rounded-xl px-4 py-2 text-sm shadow-lg">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-ink text-cream rounded-xl px-4 py-2 text-sm shadow-lg">
           {savedFlash}
         </div>
       )}
@@ -476,7 +476,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
     <div>
       <div className="label">{label}</div>
       <div className="font-display font-bold text-lg">{value}</div>
-      {sub && <div className="text-[11px] text-text-tertiary">{sub}</div>}
+      {sub && <div className="text-[11px] text-stone-400">{sub}</div>}
     </div>
   );
 }

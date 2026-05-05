@@ -94,9 +94,9 @@ export default function VideoDrop({ value, onChange, allowUrl = true }: Props) {
         <video
           src={value}
           controls
-          className="w-full rounded-xl bg-bg-sunken max-h-72 object-contain"
+          className="w-full rounded-xl bg-stone-900 max-h-72 object-contain"
         />
-        <div className="flex items-center gap-2 text-xs text-text-secondary">
+        <div className="flex items-center gap-2 text-xs text-stone-500">
           <span className="font-mono truncate flex-1">{value}</span>
           <button
             type="button"
@@ -124,7 +124,7 @@ export default function VideoDrop({ value, onChange, allowUrl = true }: Props) {
           "rounded-xl border-2 border-dashed px-4 py-6 text-center cursor-pointer transition-colors " +
           (dragOver
             ? "border-accent bg-accent/5 text-accent"
-            : "border-border-subtle hover:border-border-strong text-text-secondary")
+            : "border-stone-300 hover:border-stone-400 text-stone-500")
         }
       >
         <div className="font-display font-bold text-base">
@@ -132,7 +132,7 @@ export default function VideoDrop({ value, onChange, allowUrl = true }: Props) {
         </div>
         <div className="text-[11px] mt-1">
           {busy ? (
-            <div className="h-1 bg-bg-raised rounded-full overflow-hidden mt-2">
+            <div className="h-1 bg-stone-200 rounded-full overflow-hidden mt-2">
               <div
                 className="h-full bg-accent transition-all"
                 style={{ width: `${progress}%` }}
@@ -154,8 +154,8 @@ export default function VideoDrop({ value, onChange, allowUrl = true }: Props) {
         />
       </div>
       {allowUrl && (
-        <details className="text-xs text-text-secondary">
-          <summary className="cursor-pointer hover:text-text-primary">
+        <details className="text-xs text-stone-500">
+          <summary className="cursor-pointer hover:text-ink">
             …or paste an external URL (YouTube, Vimeo)
           </summary>
           <input
@@ -168,7 +168,7 @@ export default function VideoDrop({ value, onChange, allowUrl = true }: Props) {
         </details>
       )}
       {value && !isLocalUpload(value) && (
-        <div className="flex items-center gap-2 text-xs text-text-secondary">
+        <div className="flex items-center gap-2 text-xs text-stone-500">
           <span className="font-mono truncate flex-1">{value}</span>
           <button
             type="button"
